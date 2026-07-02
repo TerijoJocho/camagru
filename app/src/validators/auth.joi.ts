@@ -26,3 +26,8 @@ export const changePasswordSchema = Joi.object({
     newPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
     confirmNewPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
 });
+
+export const updateProfileSchema = Joi.object({
+    username:Joi.string().trim().alphanum().min(3).max(10).empty('').optional(),
+    email:Joi.string().trim().email({ minDomainSegments: 2, tlds: false }).empty('').optional(),
+});

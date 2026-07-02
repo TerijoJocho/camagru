@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { renderGalleryPage, renderSignupPage, renderLoginPage, renderForgotPasswordPage } from "../controllers/pages.controller";
+import { renderGalleryPage, renderSignupPage, renderLoginPage, renderForgotPasswordPage, renderProfilePage } from "../controllers/pages.controller";
 import { pagesMiddleware } from "../middlewares/pages.middleware";
 
 const router = Router();
@@ -10,6 +10,7 @@ router.get("/gallery", renderGalleryPage);
 router.get("/signup", renderSignupPage);
 router.get("/login", renderLoginPage);
 router.get("/forgotPassword", renderForgotPasswordPage);
+router.get("/profile", renderProfilePage);
 
 
 export default router;

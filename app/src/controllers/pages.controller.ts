@@ -1,10 +1,12 @@
 import type { Request, Response } from "express";
+import { User } from "../models/user.model";
 
 /*
  * sert la page d'acceuil
  */
 export const renderGalleryPage = async (req: Request, res: Response) => {
   res.render("pages/gallery", {
+    user: res.locals.user,
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });
@@ -39,4 +41,17 @@ export const renderForgotPasswordPage = async (req: Request, res: Response) => {
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });
+};
+
+/*
+ * sert la page de profil
+ */
+export const renderProfilePage = async (req: Request, res: Response) => {
+  const user = await User.findById(res.locals.user?._id);
+  res.render("pages/profile", {
+    user,
+    error: typeof req.query.error === "string" ? req.query.error : "",
+    success: typeof req.query.success === "string" ? req.query.success : "",
+    },
+  );
 };

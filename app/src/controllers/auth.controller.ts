@@ -9,6 +9,7 @@ import {
   emailSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  updateProfileSchema,
 } from "../validators/auth.joi";
 import { sendConfirmationEmail } from "../utils/sendConfirmationEmail";
 import { sendForgotPasswordEmail } from "../utils/sendForgotPasswordEmail";
@@ -256,5 +257,106 @@ export const changePassword = async (req: Request, res: Response) => {
     return res.redirect("/pages/gallery?success=password_changed");
   } catch (error) {
     return res.redirect("/pages/gallery?error=internal_server_error");
+  }
+};
+
+/*
+ * Permet à un utilisateur de changer son username et email
+ * quand il veut tant qu'il est authentifié
+ */
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const userID = res.locals.user._id;
+
+    const user = await User.findOne({ _id: userID });
+    if (!user) return res.redirect("/pages/login?error=user_not_found");
+
+    const { error, value } = updateProfileSchema.validate(req.body);
+    if (error) {
+      console.log(error);
+      return res.redirect("/pages/profile?error=invalid_registration_data");
+    }
+
+    const username: string = value.username;
+    const email: string = value.email;
+
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }],
+      _id: { $ne: userID },
+    });
+
+    if (existingUser)
+      return res.redirect("/pages/profile?error=user_already_exists");
+
+    const updateFields: any = {};
+
+    if (username) updateFields.username = username;
+    if (email) updateFields.email = email;
+
+    if (Object.keys(updateFields).length > 0)
+      await User.updateOne({ _id: userID }, { $set: updateFields });
+
+    return res.redirect("/pages/profile?success=profile_changed");
+  } catch (error) {
+    return res.redirect("/pages/profile?error=internal_server_error");
+  }
+};
+
+/*
+ * Permet à un utilisateur de changer son username et email
+ * quand il veut tant qu'il est authentifié
+ */
+export const changeProfilePassword = async (req: Request, res: Response) => {
+  try {
+    const { error, value } = changePasswordSchema.validate(req.body);
+    if (error) return res.redirect("/pages/profile?error=invalid_password");
+
+    const user = await User.findOne({ _id: res.locals.user._id });
+    if (!user) return res.redirect("/pages/login?error=not_authenticated");
+
+    const currentPassword = value.currentPassword;
+    const result = await bcrypt.compare(currentPassword, user.password);
+    if (!result)
+      return res.redirect("/pages/profile?error=bad_current_password");
+
+    const newPassword = value.newPassword;
+    const confirmNewPassword = req.body.confirmNewPassword;
+    if (confirmNewPassword !== newPassword)
+      return res.redirect("/pages/profile?error=password_mismatch");
+
+    const saltRounds: number = 10;
+    const hashedPassword: string = await bcrypt.hash(newPassword, saltRounds);
+
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          password: hashedPassword,
+          forgotPasswordToken: null,
+        },
+      },
+    );
+    return res.redirect("/pages/profile?success=password_reset_successful");
+  } catch (error) {
+    return res.redirect("/pages/profile?error=internal_server_error");
+  }
+};
+
+/*
+ * Permet à un utilisateur d'activer/desactiver les notifs par email
+ * quand il veut tant qu'il est authentifié
+ */
+export const toggleEmailNotifications = async (req: Request, res: Response) => {
+  try {
+    const emailNotifications = req.body.emailNotifications === "on";
+
+    await User.updateOne(
+      { _id: res.locals.user._id },
+      { $set: { emailNotifications: emailNotifications } }
+    );
+
+    return res.redirect("/pages/profile?success=profile_changed");
+  } catch (error) {
+    return res.redirect("/pages/profile?error=internal_server_error");
   }
 };

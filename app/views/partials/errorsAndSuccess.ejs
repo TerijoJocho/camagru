@@ -26,6 +26,7 @@
     logout_successful: "You have been logged out.",
     password_reset_successful: "Password reset, you can now log in.",
     password_changed: "Password changed successfully.",
+    profile_changed: "Your Profile has been changed",
   };
 
   const message = error ? errors[error] : success ? successes[success] : null;
@@ -43,5 +44,6 @@
         flash.remove();
       }
     }, 3000);
+    message = "";
   </script>
 <% } %>
