@@ -1,0 +1,47 @@
+<%
+  const errors = {
+    invalid_credentials: "Bad email or password",
+    email_not_confirmed: "Please confirm your email before logging in",
+    server_error: "Server error",
+    missing_confirmation_token: "Confirmation token missing",
+    invalid_confirmation_token: "Invalid or expired confirmation link",
+    invalid_email: "Invalid email address",
+    missing_reset_token: "Reset token missing",
+    invalid_reset_token: "Invalid or expired reset link",
+    not_authenticated: "You must be logged in",
+    user_not_found: "Bad email or password",
+    invalid_registration_data: "Invalid data, please check your inputs.",
+    user_already_exists: "This email or username is already taken.",
+    internal_server_error: "Server error, please try again.",
+    invalid_password: "Password doesn't meet requirements.",
+    password_mismatch: "Passwords don't match.",
+    invalid_password_change_data: "Invalid data.",
+    bad_current_password: "Current password is incorrect.",
+  };
+
+  const successes = {
+    account_created: "Account created! Check your email to confirm.",
+    email_confirmed: "Email confirmed, you can now log in.",
+    forgot_password_email_sent: "Reset link sent, check your email.",
+    logout_successful: "You have been logged out.",
+    password_reset_successful: "Password reset, you can now log in.",
+    password_changed: "Password changed successfully.",
+  };
+
+  const message = error ? errors[error] : success ? successes[success] : null;
+  const messageType = error ? "error" : success ? "success" : null;
+%>
+
+<% if (message) { %>
+  <div id="site-flash" class="fixed right-4 top-4 z-50 max-w-sm rounded-md px-4 py-3 text-sm font-medium shadow-lg <%= messageType === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white' %>">
+    <%= message %>
+  </div>
+  <script>
+    setTimeout(() => {
+      const flash = document.getElementById('site-flash');
+      if (flash) {
+        flash.remove();
+      }
+    }, 3000);
+  </script>
+<% } %>

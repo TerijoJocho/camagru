@@ -1,0 +1,36 @@
+<nav class="relative bg-gray-800/50">
+  <div class="mx-auto max-w-7xl py-2 px-6">
+    <div class="relative flex h-16 items-center justify-between">
+      <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+        <div class="flex shrink-0 items-center">
+          <h1 class="text-xl px-3 p-y2 font-bold text-violet-400">Camagru</h1>
+        </div>
+        <div class="hidden sm:ml-6 sm:block">
+          <div class="flex space-x-4">
+            <!-- Current: "bg-gray-950/50 text-white", Default: "text-gray-300 hover:bg-white/5 hover:text-white" -->
+            <a href="/pages/gallery" aria-current="page" class="rounded-md bg-gray-950/50 px-3 py-2 text-sm font-medium text-white hover:bg-violet/50">Gallery</a>
+            <% if(user) {%>
+            <a href="/pages/editor" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Create</a>
+            <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Profil</a>
+            <% }%>
+          </div>
+        </div>
+      </div>
+      <%if (user) { %>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-300 bg-gray-700 px-3 py-1 rounded-full"><%= user.username %></span>
+        <form action="/auth/logout" method="post">
+          <button type="submit" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-md transition-colors">
+            Logout
+          </button>
+        </form>
+      </div>
+      <% } else {%>
+      <div class="px-3 py-2 bg-violet-400 hover:bg-violet-600 rounded-md flex justify-between gap-4">
+        <a href="/pages/login" class="text-sm font-medium text-gray-300 hover:text-white hover:underline">Log in</a>
+        <a href="/pages/signup" class="text-sm font-medium text-gray-300 hover:text-white hover:underline">Sign up</a>
+      </div>
+      <% }%>  
+    </div>
+  </div>
+</nav>
