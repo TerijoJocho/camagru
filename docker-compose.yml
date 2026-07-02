@@ -1,0 +1,62 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "443:443"
+    depends_on:
+      - app
+    networks: [camagru]
+
+  #modifier le dockerfile pour prendre le .prod et enlever command
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.dev
+    container_name: app
+    stdin_open: true
+    tty: true
+    env_file:
+      - ./.env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+    command: npm run dev
+    networks: [camagru]
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - 8081:3000
+    depends_on:
+      - mongo
+    networks: [camagru]
+
+  mongo:
+    image: mongo
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - db-data:/data/db
+      - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks: [camagru]
+
+networks:
+  camagru:
+    driver: bridge
+
+volumes:
+  db-data:
