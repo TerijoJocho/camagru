@@ -60,8 +60,6 @@ export const getPictures = async (req: Request, res: Response) => {
       });
     const totalPictures = await Picture.countDocuments();
 
-      console.log(pictures)
-
     return res.json({
       pictures: pictures.map((pic) => ({
         _id: pic._id,

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <%- include('../partials/head'); %>
+  <script src="/js/create.js" defer></script>
+</head>
+  <body class="min-h-screen flex flex-col">
+
+    <header class="">
+      <%- include('../partials/header'); %>
+      <%- include('../partials/errorsAndSuccess'); %>
+    </header>
+
+    <main class="flex-1 p-8">
+        <div class="flex gap-8 bg-gray-400">
+            
+            <!-- Section création -->
+            <div class="flex flex-col gap-4 flex-1 bg-blue-300">
+                <video id="webcam" autoplay playsinline class="rounded-md w-full"></video>
+                <canvas id="canvas" class="hidden"></canvas>
+
+                <!-- Stickers -->
+                <div id="sticker-list" class="flex gap-2 bg-yellow-300">
+                    <!-- générés dynamiquement -->
+                </div>
+
+                <!-- Boutons -->
+                <button id="capture-btn" disabled class="bg-violet-500 text-white px-4 py-2 rounded-md opacity-50">
+                    Capture
+                </button>
+
+                <!-- Alternative upload -->
+                <input type="file" id="upload-input" accept="image/*">
+            </div>
+
+            <!-- Section images de l'utilisateur -->
+            <div id="user-pictures" class="flex flex-col gap-4 w-64 bg-green-400">
+            <!-- générés dynamiquement -->
+            </div>
+
+        </div>
+    </main>
+
+
+
+    <footer class="">
+      <%- include('../partials/footer'); %>
+    </footer>
+
+  </body>
+</html>

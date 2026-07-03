@@ -273,7 +273,6 @@ export const updateProfile = async (req: Request, res: Response) => {
 
     const { error, value } = updateProfileSchema.validate(req.body);
     if (error) {
-      console.log(error);
       return res.redirect("/pages/profile?error=invalid_registration_data");
     }
 

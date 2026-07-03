@@ -6,7 +6,7 @@ import path from "node:path";
 
 import pagesRoutes from "./routes/pages.routes";
 import authRoutes from "./routes/auth.routes";
-import editorRoutes from "./routes/editor.routes";
+import editorRoutes from "./routes/create.routes";
 import galleryRoutes from "./routes/gallery.routes";
 import { initEmailTransporter } from "./utils/initEmailTransporter";
 

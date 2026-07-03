@@ -90,3 +90,15 @@ export const renderPicture = async (req: Request, res: Response) => {
     return res.redirect("/pages/gallery?error=internal_server_error");
   }
 };
+
+/*
+ * sert la page de profil
+ */
+export const renderCreatePage = async (req: Request, res: Response) => {
+  const user = await User.findById(res.locals.user?._id);
+  res.render("pages/create", {
+    user,
+    error: typeof req.query.error === "string" ? req.query.error : "",
+    success: typeof req.query.success === "string" ? req.query.success : "",
+  });
+};
