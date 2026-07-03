@@ -5,12 +5,39 @@ import { User } from "../models/user.model";
 import { commentSchema } from "../validators/gallery.joi";
 import { sendCommentEmail } from "../utils/sendCommentEmail";
 
+const redirectWithMessage = (
+  res: Response,
+  target: string,
+  type: "error" | "success",
+  message: string,
+) => {
+  const separator = target.includes("?") ? "&" : "?";
+
+  return res.redirect(
+    `${target}${separator}${type}=${encodeURIComponent(message)}`,
+  );
+};
+
+const getRefererPath = (req: Request, fallback: string) => {
+  const referer = req.get("referer");
+
+  if (!referer) return fallback;
+
+  try {
+    const refererUrl = new URL(referer);
+
+    return `${refererUrl.pathname}${refererUrl.search}`;
+  } catch {
+    return fallback;
+  }
+};
+
 /*
  * renvoie la page HTML de base (juste le squelette, sans images)
  * accessible à tous
  */
 export const initGallery = (req: Request, res: Response) => {
-  res.render("pages/gallery");
+  return res.redirect("/pages/gallery");
 };
 
 /*
@@ -28,14 +55,19 @@ export const getPictures = async (req: Request, res: Response) => {
       .populate("userId", "username")
       .populate({
         path: "comments",
+        options: { sort: { createdAt: -1 } },
         populate: { path: "userId", select: "username" },
       });
-    const totalPages = await Picture.countDocuments();
+    const totalPictures = await Picture.countDocuments();
+
+      console.log(pictures)
 
     return res.json({
       pictures: pictures.map((pic) => ({
         _id: pic._id,
-        filepath: pic.filepath,
+        filepath: pic.filepath.startsWith("/uploads/")
+          ? pic.filepath
+          : `/uploads/${pic.filepath}`,
         author: (pic.userId as any).username,
         likesCount: pic.likes.length,
         comments: (pic.comments as any[]).map((comment) => ({
@@ -46,11 +78,11 @@ export const getPictures = async (req: Request, res: Response) => {
         })),
         createdAt: pic.createdAt,
       })),
-      totalPages: Math.ceil(totalPages / 5),
+      totalPages: Math.ceil(totalPictures / 5),
       currentPage: page,
     });
   } catch (error) {
-    return res.status(500).json({ error: "internal server error" });
+    return res.redirect("/pages/gallery?error=internal_server_error");
   }
 };
 
@@ -60,26 +92,35 @@ export const getPictures = async (req: Request, res: Response) => {
 export const toggleLike = async (req: Request, res: Response) => {
   try {
     const pictureId = req.params.id;
+    const fallbackTarget = `/pages/gallery/${pictureId}`;
+    const redirectTarget = getRefererPath(req, fallbackTarget);
 
-    const _id = req.user?._id;
-    if (!_id) return res.status(401).json({ error: "user not authenticated" });
+    const _id = res.locals.user?._id;
+    if (!_id)
+      return redirectWithMessage(
+        res,
+        "/pages/login",
+        "error",
+        "not_authenticated",
+      );
 
     const picture = await Picture.findById(pictureId);
     if (!picture)
-      return res.status(404).json({ error: "picture doesn't exist" });
+      return redirectWithMessage(
+        res,
+        "/pages/gallery",
+        "error",
+        "post_not_found",
+      );
 
     const found = picture.likes.some((userId) => userId.equals(_id));
     if (found)
       await Picture.findByIdAndUpdate(pictureId, { $pull: { likes: _id } });
     else await Picture.findByIdAndUpdate(pictureId, { $push: { likes: _id } });
 
-    const updatedPicture = await Picture.findById(pictureId);
-    if (!updatedPicture)
-      return res.status(404).json({ error: "picture doesn't exist" });
-
-    return res.status(200).json({ likesCount: updatedPicture?.likes.length });
+    return redirectWithMessage(res, redirectTarget, "success", "like_updated");
   } catch (error) {
-    return res.status(500).json({ error: "internal server error" });
+    return res.redirect("/pages/gallery?error=internal_server_error");
   }
 };
 
@@ -88,22 +129,29 @@ export const toggleLike = async (req: Request, res: Response) => {
  */
 export const commentPicture = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
-    if (!userId)
-      return res.status(401).json({ error: "user not authenticated" });
+    const userId = res.locals.user?._id;
+    if (!userId) return res.redirect("/pages/login?error=not_authenticated");
 
     const pictureId = req.params.id;
     const picture = await Picture.findById(pictureId);
     if (!picture)
-      return res.status(404).json({ error: "picture doesn't exist" });
+      return redirectWithMessage(
+        res,
+        "/pages/gallery",
+        "error",
+        "post_not_found",
+      );
 
     const { error, value } = commentSchema.validate(req.body);
     if (error)
-      return res
-        .status(400)
-        .json({ error: "comment doesn't fit the requirements" });
+      return redirectWithMessage(
+        res,
+        `/pages/gallery/${pictureId}`,
+        "error",
+        "invalid_comment_data",
+      );
 
-    const content = value.content;
+    const content = value.comment;
     const newComment = await Comment.create({
       pictureId: pictureId,
       userId: userId,
@@ -118,13 +166,18 @@ export const commentPicture = async (req: Request, res: Response) => {
     const authorEmail = author?.email;
 
     if (author?.emailNotifications && authorEmail) {
-      const sender = req.user?.username;
+      const sender = res.locals.user?.username;
       await sendCommentEmail(authorEmail as string, sender as string, content);
     }
 
-    res.status(200).json({ newComment: content });
+    return redirectWithMessage(
+      res,
+      `/pages/gallery/${pictureId}`,
+      "success",
+      "comment_added",
+    );
   } catch (error) {
-    return res.status(500).json({ error: "internal server error" });
+    return res.redirect("/pages/gallery?error=internal_server_error");
   }
 };
 
@@ -136,17 +189,30 @@ export const deleteComment = async (req: Request, res: Response) => {
     const commentId = req.params.commentId;
     const comment = await Comment.findById(commentId);
     if (!comment)
-      return res.status(404).json({ error: "comment doesn't exist" });
+      return redirectWithMessage(
+        res,
+        "/pages/gallery",
+        "error",
+        "comment_not_found",
+      );
 
-    if (!comment.userId.equals(req.user?._id))
-      return res
-        .status(401)
-        .json({ error: "user can not delete this comment" });
+    if (!comment.userId.equals(res.locals.user?._id))
+      return redirectWithMessage(
+        res,
+        `/pages/gallery/${req.params.id}`,
+        "error",
+        "comment_delete_not_allowed",
+      );
 
     const pictureId = req.params.id;
     const picture = await Picture.findById(pictureId);
     if (!picture)
-      return res.status(404).json({ error: "picture doesn't exist" });
+      return redirectWithMessage(
+        res,
+        "/pages/gallery",
+        "error",
+        "post_not_found",
+      );
 
     await Picture.findByIdAndUpdate(pictureId, {
       $pull: { comments: comment._id },
@@ -154,8 +220,13 @@ export const deleteComment = async (req: Request, res: Response) => {
 
     await Comment.findByIdAndDelete(commentId);
 
-    res.status(200).json({ message: "comment successfully deleted" });
+    return redirectWithMessage(
+      res,
+      `/pages/gallery/${pictureId}`,
+      "success",
+      "comment_deleted",
+    );
   } catch (error) {
-    return res.status(500).json({ error: "internal server error" });
+    return res.redirect("/pages/gallery?error=internal_server_error");
   }
 };

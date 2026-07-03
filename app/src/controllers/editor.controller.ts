@@ -4,7 +4,7 @@ import { Comment } from "../models/comment.model";
 import { Picture } from "../models/picture.model";
 
 export const getEditorStatus = (_req: Request, res: Response) => {
-	void Comment;
-	void Picture;
-	res.json({ status: "ok" });
+  void Comment;
+  void Picture;
+  return res.redirect("/pages/gallery?success=editor_ready");
 };

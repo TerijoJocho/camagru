@@ -17,6 +17,10 @@
     password_mismatch: "Passwords don't match.",
     invalid_password_change_data: "Invalid data.",
     bad_current_password: "Current password is incorrect.",
+    post_not_found:"This post does not exists",
+    comment_not_found: "This comment does not exist",
+    comment_delete_not_allowed: "You can only delete your own comment",
+    invalid_comment_data: "Invalid comment",
   };
 
   const successes = {
@@ -27,6 +31,10 @@
     password_reset_successful: "Password reset, you can now log in.",
     password_changed: "Password changed successfully.",
     profile_changed: "Your Profile has been changed",
+    like_updated: "Post updated successfully",
+    comment_added: "Comment posted successfully",
+    comment_deleted: "Comment deleted successfully",
+    editor_ready: "Editor is ready",
   };
 
   const message = error ? errors[error] : success ? successes[success] : null;

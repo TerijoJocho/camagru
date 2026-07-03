@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
 import cors from "cors";
+import path from "node:path";
 
 import pagesRoutes from "./routes/pages.routes";
 import authRoutes from "./routes/auth.routes";
@@ -16,17 +17,18 @@ const mongoUri = process.env.MONGODB_URI ?? "mongodb://mongo:27017/camagru";
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static("src/public"));
+app.use(express.static(path.join(process.cwd(), "dist/public")));
+app.use(express.static(path.join(process.cwd(), "src/public")));
 app.use(
   cors({
     origin: "http://localhost:3000", // à changer
     credentials: true,
   }),
 );
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.set("view engine", "ejs");
-app.set("views", "./views");
+app.set("views", path.join(process.cwd(), "views"));
 
 app.use("/pages", pagesRoutes);
 app.use("/auth", authRoutes);
