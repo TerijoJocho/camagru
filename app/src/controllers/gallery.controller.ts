@@ -133,16 +133,12 @@ export const commentPicture = async (req: Request, res: Response) => {
  */
 export const deleteComment = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
-    if (!userId)
-      return res.status(401).json({ error: "user not authenticated" });
-
     const commentId = req.params.commentId;
     const comment = await Comment.findById(commentId);
     if (!comment)
       return res.status(404).json({ error: "comment doesn't exist" });
 
-    if (!comment.userId.equals(userId))
+    if (!comment.userId.equals(req.user?._id))
       return res
         .status(401)
         .json({ error: "user can not delete this comment" });

@@ -1,11 +1,8 @@
 {
-  // TypeScript compiler configuration for the Node.js application.
-  // Compiles src/ to dist/ as CommonJS modules targeting ES2022.
-  // See https://www.typescriptlang.org/tsconfig/ for all options.
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "dom"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
