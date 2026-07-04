@@ -6,7 +6,7 @@ import path from "node:path";
 
 import pagesRoutes from "./routes/pages.routes";
 import authRoutes from "./routes/auth.routes";
-import editorRoutes from "./routes/create.routes";
+import createRoutes from "./routes/create.routes";
 import galleryRoutes from "./routes/gallery.routes";
 import { initEmailTransporter } from "./utils/initEmailTransporter";
 
@@ -14,8 +14,8 @@ const app = express();
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const mongoUri = process.env.MONGODB_URI ?? "mongodb://mongo:27017/camagru";
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 app.use(cookieParser());
 app.use(express.static(path.join(process.cwd(), "dist/public")));
 app.use(express.static(path.join(process.cwd(), "src/public")));
@@ -32,7 +32,7 @@ app.set("views", path.join(process.cwd(), "views"));
 
 app.use("/pages", pagesRoutes);
 app.use("/auth", authRoutes);
-app.use("/editor", editorRoutes);
+app.use("/create", createRoutes);
 app.use("/gallery", galleryRoutes);
 
 async function start() {

@@ -1,51 +1,72 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <%- include('../partials/head'); %>
-  <script src="/js/create.js" defer></script>
-</head>
+  <head>
+    <%- include('../partials/head'); %>
+    <script src="/js/create.js" defer></script>
+  </head>
   <body class="min-h-screen flex flex-col">
-
     <header class="">
-      <%- include('../partials/header'); %>
-      <%- include('../partials/errorsAndSuccess'); %>
+      <%- include('../partials/header'); %> 
+      <%-include('../partials/errorsAndSuccess'); %>
     </header>
 
     <main class="flex-1 p-8">
-        <div class="flex gap-8 bg-gray-400">
-            
-            <!-- Section création -->
-            <div class="flex flex-col gap-4 flex-1 bg-blue-300">
-                <video id="webcam" autoplay playsinline class="rounded-md w-full"></video>
-                <canvas id="canvas" class="hidden"></canvas>
+      <div class="flex flex-col lg:flex-row gap-8 bg-gray-400">
+        <!-- Section création -->
+        <div class="flex flex-col gap-4 flex-1 min-w-0 max-w-fit bg-blue-300">
+          <div
+            class="relative w-full max-w-[640px] aspect-video overflow-hidden rounded-md bg-black"
+          >
+            <video
+              id="webcam"
+              autoplay
+              playsinline
+              class="block w-full h-full object-cover"
+            ></video>
+            <canvas
+              id="canvas"
+              class="absolute inset-0 w-full h-full"
+            ></canvas>
+          </div>
 
-                <!-- Stickers -->
-                <div id="sticker-list" class="flex gap-2 bg-yellow-300">
-                    <!-- générés dynamiquement -->
-                </div>
-
-                <!-- Boutons -->
-                <button id="capture-btn" disabled class="bg-violet-500 text-white px-4 py-2 rounded-md opacity-50">
-                    Capture
-                </button>
-
-                <!-- Alternative upload -->
-                <input type="file" id="upload-input" accept="image/*">
-            </div>
-
-            <!-- Section images de l'utilisateur -->
-            <div id="user-pictures" class="flex flex-col gap-4 w-64 bg-green-400">
+          <!-- Stickers -->
+          <div id="sticker-list" class="flex gap-2 rounded-md overflow-x-auto p-4 m-2 bg-yellow-300">
             <!-- générés dynamiquement -->
+          </div>
+
+          <!-- Reglage stickers -->
+           <div class="flex gap-4">
+                <label>
+                    Taille
+                    <input id="scale" type="range" min="0.2" max="3" step="0.1" value="1">
+                </label>
+
+                <label>
+                    Rotation
+                    <input id="rotation" type="range" min="-180" max="180" value="0">
+                </label>
             </div>
 
+          <!-- Boutons -->
+          <button
+            id="capture-btn"
+            disabled
+            class="bg-violet-500 text-white px-4 py-2 rounded-md opacity-50 w-fit"
+          >
+            Capture
+          </button>
+
+          <!-- Alternative upload -->
+          <input type="file" id="upload-input" accept="image/*" />
         </div>
+
+        <!-- Section images de l'utilisateur -->
+        <div id="user-pictures" class="flex flex-col gap-4 w-64 bg-green-400">
+          <!-- générés dynamiquement -->
+        </div>
+      </div>
     </main>
 
-
-
-    <footer class="">
-      <%- include('../partials/footer'); %>
-    </footer>
-
+    <footer class=""><%- include('../partials/footer'); %></footer>
   </body>
 </html>
