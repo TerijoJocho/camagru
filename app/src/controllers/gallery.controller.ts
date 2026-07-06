@@ -116,7 +116,7 @@ export const toggleLike = async (req: Request, res: Response) => {
       await Picture.findByIdAndUpdate(pictureId, { $pull: { likes: _id } });
     else await Picture.findByIdAndUpdate(pictureId, { $push: { likes: _id } });
 
-    return redirectWithMessage(res, redirectTarget, "success", "like_updated");
+    return res.redirect(redirectTarget);
   } catch (error) {
     return res.redirect("/pages/gallery?error=internal_server_error");
   }

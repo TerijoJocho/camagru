@@ -4,68 +4,119 @@
     <%- include('../partials/head'); %>
     <script src="/js/create.js" defer></script>
   </head>
-  <body class="min-h-screen flex flex-col">
+
+  <body class="h-screen flex flex-col overflow-hidden">
     <header class="">
       <%- include('../partials/header'); %> 
       <%-include('../partials/errorsAndSuccess'); %>
     </header>
 
-    <main class="flex-1 p-8">
-      <div class="flex flex-col lg:flex-row gap-8 bg-gray-400">
-        <!-- Section création -->
-        <div class="flex flex-col gap-4 flex-1 min-w-0 max-w-fit bg-blue-300">
-          <div
-            class="relative w-full max-w-[640px] aspect-video overflow-hidden rounded-md bg-black"
-          >
+    <main class="flex-1 p-8 overflow-hidden">
+      <div class="grid h-full grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- ==================== -->
+        <!--      Création        -->
+        <!-- ==================== -->
+        <section class="flex flex-col gap-4 min-h-0">
+
+          <!-- Webcam / Canvas -->
+          <div class="relative flex-1 overflow-hidden rounded-md bg-black">
             <video
               id="webcam"
               autoplay
               playsinline
-              class="block w-full h-full object-cover"
-            ></video>
+              class="absolute inset-0 w-full h-full object-contain">
+            </video>
+
             <canvas
               id="canvas"
-              class="absolute inset-0 w-full h-full"
-            ></canvas>
+              class="absolute inset-0 w-full h-full">
+            </canvas>
           </div>
 
           <!-- Stickers -->
-          <div id="sticker-list" class="flex gap-2 rounded-md overflow-x-auto p-4 m-2 bg-yellow-300">
-            <!-- générés dynamiquement -->
+          <div
+            id="sticker-list"
+            class="flex gap-2 overflow-x-auto rounded-md p-2 bg-yellow-300">
           </div>
 
-          <!-- Reglage stickers -->
-           <div class="flex gap-4">
-                <label>
-                    Taille
-                    <input id="scale" type="range" min="0.2" max="3" step="0.1" value="1">
-                </label>
+          <!-- Réglages -->
+          <div class="flex gap-6">
+            <label class="flex flex-col">
+              Taille
+              <input id="scale" type="range"
+                min="0.2"
+                max="3"
+                step="0.1"
+                value="1">
+            </label>
 
-                <label>
-                    Rotation
-                    <input id="rotation" type="range" min="-180" max="180" value="0">
-                </label>
-            </div>
+            <label class="flex flex-col">
+              Rotation
+              <input id="rotation" type="range"
+                min="-180"
+                max="180"
+                value="0">
+            </label>
+          </div>
 
-          <!-- Boutons -->
-          <button
-            id="capture-btn"
-            disabled
-            class="bg-violet-500 text-white px-4 py-2 rounded-md opacity-50 w-fit"
-          >
-            Capture
-          </button>
+          <!-- Actions -->
+          <div class="flex gap-4 items-center">
+            <button
+              id="capture-btn"
+              disabled
+              class="bg-violet-500 text-white px-4 py-2 rounded-md opacity-50">
+              Capture
+            </button>
 
-          <!-- Alternative upload -->
-          <input type="file" id="upload-input" accept="image/*" />
-        </div>
+            <input
+              type="file"
+              id="upload-input"
+              accept="image/*">
+          </div>
 
-        <!-- Section images de l'utilisateur -->
-        <div id="user-pictures" class="flex flex-col gap-4 w-64 bg-green-400">
-          <!-- générés dynamiquement -->
-        </div>
+        </section>
+
+        <!-- ==================== -->
+        <!--       Galerie        -->
+        <!-- ==================== -->
+
+        <section class="min-h-0">
+
+          <div
+            id="user-pictures"
+            class="grid h-full grid-cols-2 gap-4 overflow-y-auto rounded-md bg-green-300 p-4">
+
+          </div>
+
+        </section>
+
       </div>
     </main>
+
+    <!-- ==================== -->
+    <!--       Delete modal   -->
+    <!-- ==================== -->
+    <div id="delete-modal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
+      <div class="bg-white rounded-lg p-6 w-80">
+        <h2 class="text-lg font-semibold mb-4">
+          Delete this picture?
+        </h2>
+
+        <p class="text-xs font-normal text-body text-gray-500 mb-6">
+          Are you sure you want to delete this picture?
+        </p>
+
+        <form method="POST" action="/create/delete">
+          <input type="hidden" id="delete-picture-id" name="pictureId">
+
+          <div class="flex justify-end gap-2">
+            <button type="button" id="cancel-delete" class="px-4 py-2 rounded bg-gray-300">No</button>
+            <button type="submit" id="cancel-delete" class="px-4 py-2 rounded bg-red-600 text-white">Yes</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <footer class=""><%- include('../partials/footer'); %></footer>
   </body>

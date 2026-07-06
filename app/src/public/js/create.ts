@@ -2,7 +2,13 @@ const video = document.getElementById("webcam") as HTMLVideoElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const captureBtn = document.getElementById("capture-btn") as HTMLButtonElement;
 const uploadInput = document.getElementById("upload-input") as HTMLInputElement;
+const userPicturesContainer = document.getElementById("user-pictures") as HTMLDivElement;
+const deleteModal = document.getElementById("delete-modal") as HTMLDivElement;
+const deleteInput = document.getElementById("delete-picture-id") as HTMLInputElement;
+const cancelDelete = document.getElementById("cancel-delete") as HTMLButtonElement;
 const ctx = canvas.getContext("2d")!;
+const CANVAS_WIDTH = 1280;
+const CANVAS_HEIGHT = 720;
 let isDragging = false;
 
 let animationId: number | null = null;
@@ -55,7 +61,8 @@ function showHeaderMessage(message: string, type: "error" | "success"): void {
 }
 
 uploadInput.addEventListener("change", () => {
-  const file = uploadInput.files?.[0];
+  const files = uploadInput.files;
+  const file = files ? files[0] : null;
   if (!file) return;
 
   const img = new Image();
@@ -65,8 +72,14 @@ uploadInput.addEventListener("change", () => {
     mode = "upload";
     baseImage = img;
 
-    canvas.width = img.width;
-    canvas.height = img.height;
+    const stream = video.srcObject as MediaStream | null;
+    if (stream) {
+      stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+    }
+    video.srcObject = null;
+
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
 
     sticker.x = canvas.width / 2;
     sticker.y = canvas.height / 2;
@@ -81,7 +94,7 @@ async function getVideo(): Promise<void> {
   baseImage = video;
   if (!video) return;
 
-  if (!navigator.mediaDevices?.getUserMedia) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     video.src = "fallbackvideo.webm";
     return;
   }
@@ -100,8 +113,8 @@ async function getVideo(): Promise<void> {
     video.addEventListener("loadedmetadata", () => {
       if (mode !== "webcam") return;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
 
       startRendering();
     });
@@ -129,8 +142,7 @@ async function getStickers(): Promise<void> {
 
       img.src = `/stickers/${sticker}`;
       img.alt = sticker;
-      img.className =
-        "w-10 h-10 object-contain cursor-pointer border-2 border-transparent rounded";
+      img.className = "w-10 h-10 object-cover cursor-pointer border-2 border-transparent rounded";
 
       img.addEventListener("click", () => {
         // Retire la sélection précédente
@@ -157,6 +169,34 @@ async function getStickers(): Promise<void> {
   }
 }
 
+function drawContain(image: HTMLImageElement | HTMLVideoElement): void {
+  const imageWidth = image instanceof HTMLVideoElement ? image.videoWidth : image.width;
+
+  const imageHeight = image instanceof HTMLVideoElement ? image.videoHeight : image.height;
+
+  const imageRatio = imageWidth / imageHeight;
+  const canvasRatio = canvas.width / canvas.height;
+
+  let drawWidth: number;
+  let drawHeight: number;
+  let x: number;
+  let y: number;
+
+  if (imageRatio > canvasRatio) {
+    drawHeight = canvas.height;
+    drawWidth = drawHeight * imageRatio;
+    y = 0;
+    x = (canvas.width - drawWidth) / 2;
+  } else {
+    drawWidth = canvas.width;
+    drawHeight = drawWidth / imageRatio;
+    x = 0;
+    y = (canvas.height - drawHeight) / 2;
+  }
+
+  ctx.drawImage(image, x, y, drawWidth, drawHeight);
+}
+
 function startRendering(): void {
   const render = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -164,7 +204,7 @@ function startRendering(): void {
     if (mode === "webcam" && video) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     } else if (mode === "upload" && baseImage) {
-      ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+      drawContain(baseImage);
     }
 
     if (stickerImage && stickerImage.complete) {
@@ -204,13 +244,21 @@ function isMouseOnSticker(mouseX: number, mouseY: number): boolean {
 }
 
 function enableDragging(): void {
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
   canvas.addEventListener("mousedown", (event: MouseEvent) => {
     const rect = canvas.getBoundingClientRect();
 
     const x = (event.clientX - rect.left) * (canvas.width / rect.width);
     const y = (event.clientY - rect.top) * (canvas.height / rect.height);
 
-    if (isMouseOnSticker(x, y)) isDragging = true;
+    if (isMouseOnSticker(x, y))
+    {
+      isDragging = true;
+      dragOffsetX = x - sticker.x;
+      dragOffsetY = y - sticker.y;
+    }
   });
 
   canvas.addEventListener("mouseup", () => {
@@ -226,8 +274,8 @@ function enableDragging(): void {
 
     const rect = canvas.getBoundingClientRect();
 
-    sticker.x = (event.clientX - rect.left) * (canvas.width / rect.width);
-    sticker.y = (event.clientY - rect.top) * (canvas.height / rect.height);
+    sticker.x = (event.clientX - rect.left) * (canvas.width / rect.width) - dragOffsetX;
+    sticker.y = (event.clientY - rect.top) * (canvas.height / rect.height) - dragOffsetY;
   });
 }
 
@@ -279,6 +327,7 @@ async function capture(): Promise<void> {
       data.success ?? "Picture created successfully",
       "success",
     );
+    renderPictures();
   } catch (error) {
     console.error("Capture error:", error);
     showHeaderMessage("Capture failed", "error");
@@ -287,7 +336,57 @@ async function capture(): Promise<void> {
   }
 }
 
+function openDeleteModal(pictureId: string): void {
+
+  deleteInput.value = pictureId;
+  deleteModal.classList.remove("hidden");
+  deleteModal.classList.add("flex");
+
+}
+
+cancelDelete.addEventListener("click", () => {
+  deleteModal.classList.remove("flex");
+  deleteModal.classList.add("hidden");
+});
+
+async function renderPictures(): Promise<void> {
+  try {
+    const result = await fetch("/create/user-pictures");
+    const data = await result.json();
+    if (!result.ok) {
+      showHeaderMessage(data.error ?? "Getting pictures failed", "error");
+      return;
+    }
+    const pictures = data.pictures;
+
+    userPicturesContainer.innerHTML = "";
+
+    pictures.forEach((pic: any) => {
+      const card = document.createElement("div");
+      card.className = "relative";
+
+      const img = document.createElement("img");
+      img.src = `/uploads/${pic.filepath}`;
+      // img.alt = pic; //mettre la description de la picture a terme
+      img.className = "w-full aspect-square object-cover rounded-md";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.className = "absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded";
+      deleteBtn.addEventListener("click", () => {
+        openDeleteModal(pic._id);
+      });
+
+      card.appendChild(img);
+      card.appendChild(deleteBtn);
+      userPicturesContainer.appendChild(card);
+    });
+  } catch (error) {}
+}
+
 getVideo();
 getStickers();
 enableDragging();
 setupControls();
+renderPictures();
