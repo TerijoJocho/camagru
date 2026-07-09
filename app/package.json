@@ -4,12 +4,14 @@
   "description": "A minimal Node.js TypeScript application.",
   "main": "dist/server.js",
   "scripts": {
-    "build": "npm run build:css && tsc",
-    "build:css": "tailwindcss -i ./src/public/css/tailwind.input.css -o ./src/public/css/tailwind.css",
-    "watch:css": "tailwindcss -i ./src/public/css/tailwind.input.css -o ./src/public/css/tailwind.css --watch",
+    "build": "npm run build:css && npm run build:frontend && tsc",
+    "build:css": "tailwindcss -i ./public/css/tailwind.input.css -o ./public/css/tailwind.css",
+    "build:frontend": "tsc -p ./public/tsconfig.frontend.json",
+    "watch:css": "tailwindcss -i ./public/css/tailwind.input.css -o ./public/css/tailwind.css --watch",
+    "watch:frontend": "tsc -p ./public/tsconfig.frontend.json --watch",
     "start": "node dist/server.js",
     "dev:server": "nodemon --watch src --watch views --ext ts,ejs --exec tsx src/server.ts",
-    "dev": "concurrently \"npm run watch:css\" \"npm run dev:server\"",
+    "dev": "concurrently \"npm run watch:css\" \"npm run watch:frontend\" \"npm run dev:server\"",
     "seed": "tsx src/seed.ts",
     "seed:dist": "node dist/seed.js"
   },

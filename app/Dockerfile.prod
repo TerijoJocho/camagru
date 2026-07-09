@@ -33,7 +33,7 @@ WORKDIR /app
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/dist ./dist
 COPY --from=builder --chown=node:node /app/views ./views
-COPY --from=builder --chown=node:node /app/src/public ./src/public
+COPY --from=builder --chown=node:node /app/public ./public
 
 #seed dep
 COPY --from=builder --chown=node:node /app/package.json ./package.json

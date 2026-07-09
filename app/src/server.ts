@@ -18,7 +18,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 app.use(cookieParser());
 app.use(express.static(path.join(process.cwd(), "dist/public")));
-app.use(express.static(path.join(process.cwd(), "src/public")));
+app.use(express.static(path.join(process.cwd(), "public")));
 app.use(
   cors({
     origin: "http://localhost:3000", // à changer
