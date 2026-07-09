@@ -19,10 +19,10 @@ const mongoUri = process.env.MONGODB_URI ?? "mongodb://mongo:27017/camagru";
 const csrfProtection = csrf({cookie: true});
 
 app.use(helmet());
-app.use(csrfProtection);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 app.use(cookieParser());
+app.use(csrfProtection);
 app.use(express.static(path.join(process.cwd(), "dist/public")));
 app.use(express.static(path.join(process.cwd(), "public")));
 app.use(
@@ -49,6 +49,14 @@ const authLimiter = rateLimit({
 app.use("/auth/login", authLimiter);
 app.use("/auth/register", authLimiter);
 app.use("/auth/forgot-password", authLimiter);
+app.use("/create/capture", authLimiter);
+app.use("/create/delete", authLimiter);
+app.use("/gallery/pictures/:id/like", authLimiter);
+app.use("/gallery/pictures/:id/comment", authLimiter);
+app.use("/gallery/pictures/:id/comment/:commentId", authLimiter);
+app.use("auth/change-profile", authLimiter);
+app.use("auth/change-profile-password", authLimiter);
+app.use("auth/change-user-preference", authLimiter);
 
 app.use("/pages", pagesRoutes);
 app.use("/auth", authRoutes);
