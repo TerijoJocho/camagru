@@ -106,7 +106,10 @@ async function getStickers(): Promise<void> {
   if (!container || !captureBtn) return;
 
   try {
-    const response = await fetch("/create/stickers");
+    const response = await fetch("/create/stickers", {
+      method: "GET",
+      headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "" },
+    });
     const data = await response.json();
     const stickers: string[] = data.stickers;
 
@@ -284,6 +287,7 @@ async function capture(): Promise<void> {
       method: "POST",
       headers: {
         "Content-type": "application/json",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
       },
       body: JSON.stringify({
         image: imageBase64,
@@ -330,6 +334,7 @@ deleteForm?.addEventListener("submit", async (event: SubmitEvent) => {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
       },
       body: JSON.stringify({ pictureId }),
     });
@@ -354,7 +359,10 @@ deleteForm?.addEventListener("submit", async (event: SubmitEvent) => {
 
 async function renderPictures(): Promise<void> {
   try {
-    const result = await fetch("/create/user-pictures");
+    const result = await fetch("/create/user-pictures", {
+      method: "GET",
+      headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "" },
+    });
     const data = await result.json();
     if (!result.ok) {
       showHeaderMessage(getErrorMessage(data.error), "error");

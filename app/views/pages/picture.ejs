@@ -29,6 +29,7 @@
                     </span>
 
                     <form id="like-form" method="POST" action="/gallery/pictures/<%= post._id %>/like">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit" class="flex items-center gap-1">
                             <% if (isLiked) { %>
                                 <i id="like-icon" class="fa-solid fa-heart text-red-500"></i>
@@ -66,6 +67,7 @@
                 </div>
                 
                 <form id="comment-form" data-picture-id="<%= post._id %>" method="POST" action="/gallery/pictures/<%= post._id %>/comment">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="w-full bg-white/30 backdrop-blur-sm rounded-md">
                         <div class="px-4 py-2 bg-neutral-secondary-medium rounded-t-base">
                             <label for="comment" class="sr-only">Your comment</label>

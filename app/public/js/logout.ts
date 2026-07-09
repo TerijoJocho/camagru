@@ -13,7 +13,8 @@ if (logoutForm) {
       const res = await fetch("/auth/logout", {
         method: "POST",
         headers: {
-          "Accept": "application/json",        
+          "Accept": "application/json", 
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",       
         },
       });
   

@@ -22,12 +22,12 @@ function wireDeleteCommentButton(btn: HTMLButtonElement): void {
     if (!commentId || !pictureId) return;
 
     try {
-      const res = await fetch(
-        `/gallery/pictures/${pictureId}/comment/${commentId}`,
+      const res = await fetch(`/gallery/pictures/${pictureId}/comment/${commentId}`,
         {
           method: "DELETE",
           headers: {
             Accept: "application/json",
+            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
           },
         },
       );
@@ -61,6 +61,7 @@ likeForm?.addEventListener("submit", async (event) => {
       method: "POST",
       headers: {
         Accept: "application/json",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
       },
     });
 
@@ -103,6 +104,7 @@ commentForm?.addEventListener("submit", async (event) => {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
       },
       body: JSON.stringify({ comment: content }),
     });
@@ -123,15 +125,12 @@ commentForm?.addEventListener("submit", async (event) => {
       headerRow.className = "flex items-center";
 
       const author = document.createElement("p");
-      author.className =
-        "text-base font-medium px-2 py-1 rounded bg-violet-100 m-2";
+      author.className = "text-base font-medium px-2 py-1 rounded bg-violet-100 m-2";
       author.textContent = data.comment.author ?? "You";
 
       const date = document.createElement("p");
       date.className = "text-xs flex-1 px-2 py-1 italic text-gray-300";
-      date.textContent = new Date(data.comment.createdAt).toLocaleDateString(
-        "en-EN",
-      );
+      date.textContent = new Date(data.comment.createdAt).toLocaleDateString("en-EN");
 
       const content = document.createElement("p");
       content.className = "m-2";

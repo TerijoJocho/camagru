@@ -152,6 +152,7 @@ export const login = async (req: Request, res: Response) => {
     const response = res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
     });
 
     return response.status(200).json({
@@ -243,6 +244,7 @@ export const getResetPasswordForm = async (req: Request, res: Response) => {
   res.render("pages/resetPassword", {
     user: null,
     token,
+    csrfToken: req.csrfToken(),
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });

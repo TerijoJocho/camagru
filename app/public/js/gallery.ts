@@ -32,7 +32,10 @@ async function getData(page: number): Promise<void> {
   const url = `/gallery/pictures?page=${page}`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "" },
+    });
 
     if (!response.ok) {
       const data = await response.json();

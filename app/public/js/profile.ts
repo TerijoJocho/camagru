@@ -27,6 +27,8 @@ async function submitChangeProfileForm(): Promise<void> {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
           },
           body: JSON.stringify(body),
         });
@@ -66,6 +68,8 @@ async function submitChangePasswordForm(): Promise<void> {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
           },
           body: JSON.stringify(body),
         });
@@ -103,6 +107,8 @@ async function submitEmailNotificationsForm(): Promise<void> {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
           },
           body: JSON.stringify(body),
         });

@@ -8,6 +8,7 @@ import { Picture } from "../models/picture.model";
 export const renderGalleryPage = async (req: Request, res: Response) => {
   res.render("pages/gallery", {
     user: res.locals.user,
+    csrfToken: req.csrfToken(),
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });
@@ -18,6 +19,7 @@ export const renderGalleryPage = async (req: Request, res: Response) => {
  */
 export const renderSignupPage = async (req: Request, res: Response) => {
   res.render("pages/signup", {
+    csrfToken: req.csrfToken(),
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });
@@ -28,6 +30,7 @@ export const renderSignupPage = async (req: Request, res: Response) => {
  */
 export const renderLoginPage = async (req: Request, res: Response) => {
   res.render("pages/login", {
+    csrfToken: req.csrfToken(),
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });
@@ -38,6 +41,7 @@ export const renderLoginPage = async (req: Request, res: Response) => {
  */
 export const renderForgotPasswordPage = async (req: Request, res: Response) => {
   res.render("pages/forgotPassword", {
+    csrfToken: req.csrfToken(),
     token: typeof req.query.token === "string" ? req.query.token : "",
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
@@ -51,6 +55,7 @@ export const renderProfilePage = async (req: Request, res: Response) => {
   const user = await User.findById(res.locals.user?._id);
   res.render("pages/profile", {
     user,
+    csrfToken: req.csrfToken(),
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });
@@ -82,6 +87,7 @@ export const renderPicture = async (req: Request, res: Response) => {
       post,
       isLiked,
       user: res.locals.user,
+      csrfToken: req.csrfToken(),
       error: typeof req.query.error === "string" ? req.query.error : "",
       success: typeof req.query.success === "string" ? req.query.success : "",
     });
@@ -98,6 +104,7 @@ export const renderCreatePage = async (req: Request, res: Response) => {
   const user = await User.findById(res.locals.user?._id);
   res.render("pages/create", {
     user,
+    csrfToken: req.csrfToken(),
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
   });
