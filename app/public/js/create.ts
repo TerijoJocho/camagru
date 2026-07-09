@@ -178,24 +178,20 @@ function startRendering(): void {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (mode === "webcam" && video) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      ctx.restore();
     } else if (mode === "upload" && baseImage) {
       drawContain(baseImage);
     }
 
     if (stickerImage && stickerImage.complete) {
       ctx.save();
-
       ctx.translate(sticker.x, sticker.y);
       ctx.rotate(sticker.rotation);
       ctx.scale(sticker.scale, sticker.scale);
-
-      ctx.drawImage(
-        stickerImage,
-        -stickerImage.width / 2,
-        -stickerImage.height / 2,
-      );
-
+      ctx.drawImage(stickerImage, -stickerImage.width / 2, -stickerImage.height / 2);
       ctx.restore();
     }
 
