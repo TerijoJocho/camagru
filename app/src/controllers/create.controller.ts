@@ -40,7 +40,7 @@ export const createCapture = async (req: Request, res: Response) => {
     const buffer = Buffer.from(base64Data, "base64");
 
     const type = await fileTypeFromBuffer(buffer);
-    if (!type || ["image/jpeg", "image/png", "image/webp"].includes(types.mime))
+    if (!type || ["image/jpeg", "image/png", "image/webp"].includes(type.mime))
       return res.status(400).json({ error: "invalid_file_type" });
 
     const fileName = `capture_${userId}_${Date.now()}.jpg`;

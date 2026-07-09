@@ -22,6 +22,7 @@ const errorMessages: Record<string, string> = {
   invalid_comment_data: "Invalid comment.",
   no_image: "No image provided.",
   error_stickers: "Unable to load stickers.",
+  invalid_file_type: "Your file must be .jpeg, .png or .webp."
 };
 
 const successMessages: Record<string, string> = {
