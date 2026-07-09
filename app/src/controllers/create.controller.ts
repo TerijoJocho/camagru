@@ -2,8 +2,8 @@ import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 import type { Request, Response } from "express";
-
 import { Picture } from "../models/picture.model";
+import { fileTypeFromBuffer } from "file-type";
 
 export const getStickers = async (req: Request, res: Response) => {
   try {
@@ -37,10 +37,16 @@ export const createCapture = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "no_image" });
 
     const base64Data = image.split(",")[1];
+    const buffer = Buffer.from(base64Data, "base64");
+
+    const type = await fileTypeFromBuffer(buffer);
+    if (!type || ["image/jpeg", "image/png", "image/webp"].includes(types.mime))
+      return res.status(400).json({ error: "invalid_file_type" });
+
     const fileName = `capture_${userId}_${Date.now()}.jpg`;
     const filePath = path.join(process.cwd(), "uploads", fileName);
 
-    await sharp(Buffer.from(base64Data, "base64"))
+    await sharp(buffer)
       .resize({ width: 1280 })
       .jpeg({ quality: 80 })
       .toFile(filePath);
