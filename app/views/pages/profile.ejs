@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
   <%- include('../partials/head'); %>
+  <script type="module" src="/js/profile.js" defer></script>
 </head>
   <body class="">
 
@@ -18,7 +19,7 @@
             <p class="text-sm text-gray-400 mt-1">You can change all of your informations here</p>
           </div>
 
-          <form method="POST" action="/auth/change-profile" class="space-y-4">
+          <form id="change-profile-form" class="space-y-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Username</label>
               <input type="text" name="username" placeholder="<%= user?.username %>"
@@ -33,7 +34,7 @@
               <p class="text-xs text-gray-400 "><em>Account created on the <%= new Date(user?.createdAt).toLocaleDateString('en-EN') %></em></p>
             </div>
             
-            <button type="submit"
+            <button type="submit" id="change-profile-btn"
               class="w-full bg-violet-500 hover:bg-violet-400 text-white rounded-md py-2 text-sm font-medium transition-colors mt-2">
                 Update changes
             </button>
@@ -43,7 +44,7 @@
         <div class="mt-16">
           <h2 class="text-xl font-medium text-gray-900 dark:text-white mb-4">Password settings</h2>
   
-          <form method="POST" action="/auth/change-profile-password" class="space-y-4">
+          <form id="change-password-form" class="space-y-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Current password</label>
               <input type="password" name="currentPassword" placeholder="************" required
@@ -60,7 +61,7 @@
                   class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500">
             </div>
             
-            <button type="submit"
+            <button type="submit" id="change-password-btn"
               class="w-full bg-violet-500 hover:bg-violet-400 text-white rounded-md py-2 text-sm font-medium transition-colors mt-2">
                 Change password
             </button>
@@ -70,12 +71,12 @@
         <div class="mt-16">
           <h2 class="text-xl font-medium text-gray-900 dark:text-white">User preferences</h2>
   
-          <form id="notificationsForm" method="POST" action="/auth/change-user-reference" class="space-y-4 mt-2">
+          <form id="notifications-form" class="space-y-4 mt-2">
             <div class="flex">
                 <div class="flex items-center h-5">
                     <input 
                       type="checkbox"
-                      id="emailNotifications"
+                      id="email-notifications-input"
                       name="emailNotifications" 
                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
                       <% if (user?.emailNotifications) { %> checked <% } %>
@@ -96,13 +97,5 @@
     <footer>
       <%- include('../partials/footer'); %>
     </footer>
-    <script>
-      const checkbox = document.getElementById("emailNotifications");
-
-      checkbox.addEventListener("change", () => {
-          checkbox.form.submit();
-      });
-    </script>
-
   </body>
 </html>

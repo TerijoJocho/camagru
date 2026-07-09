@@ -21,7 +21,9 @@ export const createNewAccount = async (req: Request, res: Response) => {
   try {
     const { error, value } = registerSchema.validate(req.body);
     if (error) {
-      return res.redirect("/pages/signup?error=invalid_registration_data");
+      return res.status(400).json({
+        error: "invalid_registration_data",
+      });
     }
 
     const username = value.username;
@@ -29,15 +31,21 @@ export const createNewAccount = async (req: Request, res: Response) => {
     const password = value.password;
     const confirmPassword = value.confirmPassword;
 
-    if (password !== confirmPassword)
-      return res.redirect("/pages/signup?error=password_mismatch");
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        error: "password_mismatch",
+      });
+    }
 
     const existingUser = await User.findOne({
       $or: [{ email }, { username }],
     });
 
-    if (existingUser)
-      return res.redirect("/pages/signup?error=user_already_exists");
+    if (existingUser) {
+      return res.status(400).json({
+        error: "user_already_exists",
+      });
+    }
 
     const saltRounds: number = 10;
     const hashedPassword: string = await bcrypt.hash(password, saltRounds);
@@ -52,9 +60,14 @@ export const createNewAccount = async (req: Request, res: Response) => {
     });
 
     await sendConfirmationEmail(email, confirmationToken);
-    return res.redirect("/pages/login?success=account_created");
+    return res.status(200).json({
+      success: "account_created",
+      redirect: "/pages/login",
+    });
   } catch (error) {
-    return res.redirect("/pages/signup?error=internal_server_error");
+    return res.status(500).json({
+      error: "internal_server_error",
+    });
   }
 };
 
@@ -64,12 +77,14 @@ export const createNewAccount = async (req: Request, res: Response) => {
 export const confirmEmail = async (req: Request, res: Response) => {
   try {
     const token = typeof req.query.token === "string" ? req.query.token : "";
-    if (!token)
-      return res.redirect("/pages/login?error=missing_confirmation_token");
+    if (!token) {
+      return res.redirect("/pages/login?success=missing_confirmation_token");
+    }
 
     const user = await User.findOne({ confirmationToken: token });
-    if (!user)
-      return res.redirect("/pages/login?error=invalid_confirmation_token");
+    if (!user) {
+      return res.redirect("/pages/login?success=invalid_confirmation_token");
+    }
 
     await User.updateOne(
       { confirmationToken: token },
@@ -80,9 +95,10 @@ export const confirmEmail = async (req: Request, res: Response) => {
         },
       },
     );
+
     return res.redirect("/pages/login?success=email_confirmed");
   } catch (error) {
-    return res.redirect("/pages/login?error=internal_server_error");
+    return res.redirect("/pages/login?success=internal_server_error");
   }
 };
 
@@ -92,36 +108,61 @@ export const confirmEmail = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { error, value } = loginSchema.validate(req.body);
-    if (error) return res.redirect("/pages/login?error=invalid_credentials");
+    if (error) {
+      return res.status(400).json({
+        error: "invalid_credentials",
+      });
+    }
 
     const email = value.email;
     const password = value.password;
 
     const user = await User.findOne({ email: email });
-    if (!user) return res.redirect("/pages/login?error=user_not_found");
+    if (!user) {
+      return res.status(404).json({
+        error: "user_not_found",
+      });
+    }
 
-    if (user.accountConfirmed === false)
-      return res.redirect("/pages/login?error=email_not_confirmed");
+    if (user.accountConfirmed === false) {
+      return res.status(401).json({
+        error: "email_not_confirmed",
+      });
+    }
 
     const result = await bcrypt.compare(password, user.password);
-    if (!result) return res.redirect("/pages/login?error=bad_password");
+    if (!result) {
+      return res.status(401).json({
+        error: "bad_password",
+      });
+    }
 
     const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
-    if (!jwtSecret) return res.redirect("/pages/login?error=server_error");
+    if (!jwtSecret) {
+      return res.status(500).json({
+        error: "server_error",
+      });
+    }
 
     const token = jwt.sign(
       { _id: user._id, username: user.username, email: user.email },
       jwtSecret,
       { expiresIn: "1h" },
     );
-    return res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-      })
-      .redirect("/pages/gallery");
+    const response = res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    return response.status(200).json({
+      success: "login_successful",
+      redirect: "/pages/gallery",
+    });
   } catch (error) {
-    return res.redirect("/pages/login?error=internal_server_error");
+    return res.status(500).json({
+      error: "internal_server_error",
+      redirect: "/pages/login",
+    });
   }
 };
 
@@ -129,12 +170,22 @@ export const login = async (req: Request, res: Response) => {
  * Déconnecte l'utilisateur
  */
 export const logout = async (req: Request, res: Response) => {
-  return res
-    .clearCookie("token", {
+  try {
+    res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-    })
-    .redirect("/pages/login?success=logout_successful");
+    });
+
+    return res.status(200).json({
+      success: "logout_successful",
+      redirect: "/pages/login",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "internal_server_error",
+      redirect: "/pages/gallery",
+    });
+  }
 };
 
 /*
@@ -144,24 +195,45 @@ export const logout = async (req: Request, res: Response) => {
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { error, value } = emailSchema.validate(req.body);
-    if (error) return res.redirect("/pages/login?error=invalid_email");
+
+    if (error) {
+      return res.status(400).json({
+        error: "invalid_email",
+      });
+    }
 
     const email = value.email;
 
-    const user = await User.findOne({ email: email });
-    if (!user) return res.redirect("/pages/login?error=user_not_found");
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        error: "user_not_found",
+      });
+    }
 
     const forgotPasswordToken = randomBytes(32).toString("hex");
 
     await User.updateOne(
-      { email: email },
-      { $set: { forgotPasswordToken: forgotPasswordToken } },
+      { email },
+      {
+        $set: {
+          forgotPasswordToken,
+        },
+      },
     );
 
     await sendForgotPasswordEmail(email, forgotPasswordToken);
-    return res.redirect("/pages/login?success=forgot_password_email_sent");
+
+    return res.status(200).json({
+      success: "forgot_password_email_sent",
+      redirect: "/pages/login",
+    });
   } catch (error) {
-    return res.redirect("/pages/login?error=internal_server_error");
+    return res.status(500).json({
+      error: "internal_server_error",
+      redirect: "/pages/login",
+    });
   }
 };
 
@@ -169,6 +241,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 export const getResetPasswordForm = async (req: Request, res: Response) => {
   const token = typeof req.query.token === "string" ? req.query.token : "";
   res.render("pages/resetPassword", {
+    user: null,
     token,
     error: typeof req.query.error === "string" ? req.query.error : "",
     success: typeof req.query.success === "string" ? req.query.success : "",
@@ -178,26 +251,40 @@ export const getResetPasswordForm = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const token = typeof req.query.token === "string" ? req.query.token : "";
-    if (!token) return res.redirect("/pages/login?error=missing_reset_token");
+
+    if (!token) {
+      return res.status(400).json({
+        error: "missing_reset_token",
+      });
+    }
 
     const { error, value } = resetPasswordSchema.validate(req.body);
-    if (error)
-      return res.redirect(
-        `/pages/reset-password?token=${encodeURIComponent(token)}&error=invalid_password`,
-      );
+
+    if (error) {
+      return res.status(400).json({
+        error: "invalid_password",
+      });
+    }
 
     const user = await User.findOne({ forgotPasswordToken: token });
-    if (!user) return res.redirect("/pages/login?error=invalid_reset_token");
+
+    if (!user) {
+      return res.status(404).json({
+        error: "invalid_reset_token",
+      });
+    }
 
     const password = value.password;
     const confirmPassword = req.body.confirmPassword;
-    if (confirmPassword !== password)
-      return res.redirect(
-        `/pages/reset-password?token=${encodeURIComponent(token)}&error=password_mismatch`,
-      );
 
-    const saltRounds: number = 10;
-    const hashedPassword: string = await bcrypt.hash(password, saltRounds);
+    if (confirmPassword !== password) {
+      return res.status(400).json({
+        error: "password_mismatch",
+      });
+    }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     await User.updateOne(
       { forgotPasswordToken: token },
@@ -208,55 +295,16 @@ export const resetPassword = async (req: Request, res: Response) => {
         },
       },
     );
-    return res.redirect("/pages/login?success=password_reset_successful");
+
+    return res.status(200).json({
+      success: "password_reset_successful",
+      redirect: "/pages/login",
+    });
   } catch (error) {
-    return res.redirect("/pages/login?error=internal_server_error");
-  }
-};
-
-/*
- * Permet à un utilisateur de changer son mot de passe
- * quand il veut tant qu'il est authentifié
- */
-export const changePassword = async (req: Request, res: Response) => {
-  try {
-    const _id = req.user?._id;
-    if (!_id) return res.redirect("/pages/login?error=not_authenticated");
-
-    const user = await User.findOne({ _id: _id });
-    if (!user) return res.redirect("/pages/login?error=user_not_found");
-
-    const { error, value } = changePasswordSchema.validate(req.body);
-    if (error)
-      return res.redirect("/pages/gallery?error=invalid_password_change_data");
-
-    const currentPassword = value.currentPassword;
-    const result = await bcrypt.compare(currentPassword, user.password);
-    if (!result)
-      return res.redirect("/pages/gallery?error=bad_current_password");
-
-    const newPassword = value.newPassword;
-    const confirmNewPassword = value.confirmNewPassword;
-    if (newPassword !== confirmNewPassword)
-      return res.redirect("/pages/gallery?error=password_mismatch");
-
-    const saltRounds: number = 10;
-    const hashedNewPassword: string = await bcrypt.hash(
-      newPassword,
-      saltRounds,
-    );
-
-    await User.updateOne(
-      { _id: _id },
-      {
-        $set: {
-          password: hashedNewPassword,
-        },
-      },
-    );
-    return res.redirect("/pages/gallery?success=password_changed");
-  } catch (error) {
-    return res.redirect("/pages/gallery?error=internal_server_error");
+    return res.status(500).json({
+      error: "internal_server_error",
+      redirect: "/pages/login",
+    });
   }
 };
 
@@ -269,25 +317,34 @@ export const updateProfile = async (req: Request, res: Response) => {
     const userID = res.locals.user._id;
 
     const user = await User.findOne({ _id: userID });
-    if (!user) return res.redirect("/pages/login?error=user_not_found");
+    if (!user) {
+      return res.status(404).json({
+        error: "user_not_found",
+        redirect: "/pages/login",
+      });
+    }
 
     const { error, value } = updateProfileSchema.validate(req.body);
     if (error) {
-      return res.redirect("/pages/profile?error=invalid_registration_data");
+      return res.status(400).json({
+        error: "invalid_registration_data",
+      });
     }
 
-    const username: string = value.username;
-    const email: string = value.email;
+    const { username, email } = value;
 
     const existingUser = await User.findOne({
       $or: [{ email }, { username }],
       _id: { $ne: userID },
     });
 
-    if (existingUser)
-      return res.redirect("/pages/profile?error=user_already_exists");
+    if (existingUser) {
+      return res.status(409).json({
+        error: "user_already_exists",
+      });
+    }
 
-    const updateFields: any = {};
+    const updateFields: Record<string, string> = {};
 
     if (username) updateFields.username = username;
     if (email) updateFields.email = email;
@@ -295,9 +352,14 @@ export const updateProfile = async (req: Request, res: Response) => {
     if (Object.keys(updateFields).length > 0)
       await User.updateOne({ _id: userID }, { $set: updateFields });
 
-    return res.redirect("/pages/profile?success=profile_changed");
+    return res.status(200).json({
+      success: "profile_changed",
+      redirect: "/pages/profile",
+    });
   } catch (error) {
-    return res.redirect("/pages/profile?error=internal_server_error");
+    return res.status(500).json({
+      error: "internal_server_error",
+    });
   }
 };
 
@@ -308,23 +370,37 @@ export const updateProfile = async (req: Request, res: Response) => {
 export const changeProfilePassword = async (req: Request, res: Response) => {
   try {
     const { error, value } = changePasswordSchema.validate(req.body);
-    if (error) return res.redirect("/pages/profile?error=invalid_password");
 
-    const user = await User.findOne({ _id: res.locals.user._id });
-    if (!user) return res.redirect("/pages/login?error=not_authenticated");
+    if (error) {
+      return res.status(400).json({
+        error: "invalid_password",
+      });
+    }
 
-    const currentPassword = value.currentPassword;
-    const result = await bcrypt.compare(currentPassword, user.password);
-    if (!result)
-      return res.redirect("/pages/profile?error=bad_current_password");
+    const user = await User.findById(res.locals.user._id);
 
-    const newPassword = value.newPassword;
-    const confirmNewPassword = req.body.confirmNewPassword;
-    if (confirmNewPassword !== newPassword)
-      return res.redirect("/pages/profile?error=password_mismatch");
+    if (!user) {
+      return res.status(401).json({
+        error: "not_authenticated",
+        redirect: "/pages/login",
+      });
+    }
 
-    const saltRounds: number = 10;
-    const hashedPassword: string = await bcrypt.hash(newPassword, saltRounds);
+    const result = await bcrypt.compare(value.currentPassword, user.password);
+
+    if (!result) {
+      return res.status(401).json({
+        error: "bad_current_password",
+      });
+    }
+
+    if (value.newPassword !== value.confirmNewPassword) {
+      return res.status(400).json({
+        error: "password_mismatch",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(value.newPassword, 10);
 
     await User.updateOne(
       { _id: user._id },
@@ -335,9 +411,15 @@ export const changeProfilePassword = async (req: Request, res: Response) => {
         },
       },
     );
-    return res.redirect("/pages/profile?success=password_reset_successful");
+
+    return res.status(200).json({
+      success: "password_changed",
+      redirect: "/pages/profile",
+    });
   } catch (error) {
-    return res.redirect("/pages/profile?error=internal_server_error");
+    return res.status(500).json({
+      error: "internal_server_error",
+    });
   }
 };
 
@@ -351,11 +433,16 @@ export const toggleEmailNotifications = async (req: Request, res: Response) => {
 
     await User.updateOne(
       { _id: res.locals.user._id },
-      { $set: { emailNotifications: emailNotifications } }
+      { $set: { emailNotifications: emailNotifications } },
     );
 
-    return res.redirect("/pages/profile?success=profile_changed");
+    return res.status(200).json({
+      success: "profile_changed",
+      redirect: "/pages/profile",
+    });
   } catch (error) {
-    return res.redirect("/pages/profile?error=internal_server_error");
+    return res.status(500).json({
+      error: "internal_server_error",
+    });
   }
 };

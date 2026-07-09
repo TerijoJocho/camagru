@@ -1,6 +1,10 @@
-const galleryContainer = document.getElementById(
-  "gallery-container",
-) as HTMLDivElement | null;
+import {
+  showHeaderMessage,
+  getErrorMessage,
+  getSuccessMessage,
+} from "./feedbacks.js";
+
+const galleryContainer = document.getElementById("gallery-container") as HTMLDivElement | null;
 const prevBtn = document.getElementById("prev-btn") as HTMLAnchorElement | null;
 const nextBtn = document.getElementById("next-btn") as HTMLAnchorElement | null;
 const pageInfo = document.getElementById("page-info") as HTMLSpanElement | null;
@@ -22,14 +26,19 @@ interface GalleryResponse {
 }
 
 async function getData(page: number): Promise<void> {
+  if (!galleryContainer)
+      return;
+
   const url = `/gallery/pictures?page=${page}`;
 
   try {
     const response = await fetch(url);
 
-    if (!response.ok) throw new Error(`error : ${response.status}`);
-
-    if (!galleryContainer) throw new Error("error : internal server error");
+    if (!response.ok) {
+      const data = await response.json();
+      showHeaderMessage(getErrorMessage(data.error), "error");
+      return;
+    }
 
     const data: GalleryResponse = await response.json();
 
@@ -74,7 +83,7 @@ async function getData(page: number): Promise<void> {
 
     totalPages = data.totalPages;
   } catch (error) {
-    console.error(error);
+    showHeaderMessage(getErrorMessage("internal_server_error"), "error");
   }
 }
 

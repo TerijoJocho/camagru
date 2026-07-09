@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <%- include('../partials/head'); %>
-  <script src="/js/gallery.js" defer></script>
+  <script type="module" src="/js/picture.js" defer></script>
 </head>
   <body class="min-h-screen flex flex-col">
 
@@ -17,7 +17,7 @@
 
                 <!-- Image -->
                 <img
-                    class="w-full max-h-[450px] object-cover flex-1"
+                    class="w-full min-h-[450px] max-h-[450px] object-cover flex-1"
                     src="<%= post.filepath.startsWith('/uploads/') ? post.filepath : `/uploads/${post.filepath}` %>"
                     alt="Picture by <%= post.userId.username %>"
                 />
@@ -28,14 +28,14 @@
                     <%= post.userId.username %>
                     </span>
 
-                    <form method="POST" action="/gallery/pictures/<%= post._id %>/like">
+                    <form id="like-form" method="POST" action="/gallery/pictures/<%= post._id %>/like">
                         <button type="submit" class="flex items-center gap-1">
                             <% if (isLiked) { %>
-                                <i class="fa-solid fa-heart text-red-500"></i>
+                                <i id="like-icon" class="fa-solid fa-heart text-red-500"></i>
                             <% } else { %>
-                                <i class="fa-regular fa-heart"></i>
+                                <i id="like-icon" class="fa-regular fa-heart"></i>
                             <% } %>
-                            <span><%= post.likes.length %></span>
+                            <span id="like-count"><%= post.likes.length %></span>
                         </button>
                     </form>
                 </div>
@@ -45,14 +45,19 @@
 
             <!-- Commentaires -->
             <div class="flex flex-col justify-between gap-6 flex-1">
-                <div class=" flex-1 p-3 max-h-80 overflow-y-auto space-y-2 bg-white/30 backdrop-blur-sm rounded-md">
+                <div id="comments-list" class=" flex-1 p-3 max-h-80 overflow-y-auto space-y-2 bg-white/30 backdrop-blur-sm rounded-md">
     
                     <% post.comments.forEach(comment => { %>
-                        <div class="border rounded-md bg-white flex flex-col">
+                        <div class="border rounded-md bg-white flex flex-col relative" id="comment-<%= comment._id %>">
                             <div class="flex items-center">
                                 <p class="text-base font-medium px-2 py-1 rounded bg-violet-100 m-2"> <%= comment.userId.username %> </p>
-                                <p class="text-xs text-end flex-1 px-2 py-1 italic text-gray-300"> <%= new Date(comment.createdAt).toLocaleDateString('en-EN') %> </p>
+                                <p class="text-xs flex-1 px-2 py-1 italic text-gray-300"> <%= new Date(comment.createdAt).toLocaleDateString('en-EN') %> </p>
                             </div>
+                            <% if (comment.userId._id.toString() === user._id.toString()) {%>
+                                <button data-comment-id="<%= comment._id %>" data-picture-id="<%= comment.pictureId %>" class="delete-comment-btn absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            <% } %>
                             <p class="m-2">
                                 <%= comment.content %>
                             </p>
@@ -60,11 +65,11 @@
                     <% }) %>
                 </div>
                 
-                <form method="POST" action="/gallery/pictures/<%= post._id %>/comment">
+                <form id="comment-form" data-picture-id="<%= post._id %>" method="POST" action="/gallery/pictures/<%= post._id %>/comment">
                     <div class="w-full bg-white/30 backdrop-blur-sm rounded-md">
                         <div class="px-4 py-2 bg-neutral-secondary-medium rounded-t-base">
                             <label for="comment" class="sr-only">Your comment</label>
-                            <textarea id="comment" name="comment" rows="4" class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="Write a comment..." required ></textarea>
+                            <textarea id="comment-input" name="comment" rows="4" class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="Write a comment..." required ></textarea>
                         </div>
                         <div class="flex items-center px-3 py-2 border-default-medium">
                             <button type="submit" class="text-white bg-violet-400 box-border border border-transparent hover:bg-violet-300 font-medium rounded-lg text-sm px-3 py-2">Post comment</button>                            

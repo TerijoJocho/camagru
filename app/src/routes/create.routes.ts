@@ -8,6 +8,6 @@ const router = Router();
 router.get("/stickers", authMiddleware, getStickers);
 router.post("/capture", authMiddleware, createCapture);
 router.get("/user-pictures", authMiddleware, getUserPictures);
-router.post("/delete", authMiddleware, deletePicture);
+router.delete("/delete", authMiddleware, deletePicture);
 
 export default router;

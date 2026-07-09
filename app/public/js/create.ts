@@ -1,11 +1,19 @@
+import {
+  showHeaderMessage,
+  getErrorMessage,
+  getSuccessMessage,
+} from "./feedbacks.js";
+
 const video = document.getElementById("webcam") as HTMLVideoElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const captureBtn = document.getElementById("capture-btn") as HTMLButtonElement;
 const uploadInput = document.getElementById("upload-input") as HTMLInputElement;
 const userPicturesContainer = document.getElementById("user-pictures") as HTMLDivElement;
 const deleteModal = document.getElementById("delete-modal") as HTMLDivElement;
+const deleteForm = document.getElementById("delete-form") as HTMLFormElement;
 const deleteInput = document.getElementById("delete-picture-id") as HTMLInputElement;
 const cancelDelete = document.getElementById("cancel-delete") as HTMLButtonElement;
+const confirmDelete = document.getElementById("confirm-delete") as HTMLButtonElement;
 const ctx = canvas.getContext("2d")!;
 const CANVAS_WIDTH = 1280;
 const CANVAS_HEIGHT = 720;
@@ -24,41 +32,6 @@ let sticker = {
 
 let baseImage: HTMLVideoElement | HTMLImageElement | null = video;
 let mode: "webcam" | "upload" = "webcam";
-
-function showHeaderMessage(message: string, type: "error" | "success"): void {
-  const header = document.querySelector("header");
-
-  if (!header) return;
-
-  const existingFlash = document.getElementById("site-flash");
-  if (existingFlash) {
-    existingFlash.remove();
-  }
-
-  const flash = document.createElement("div");
-  flash.id = "site-flash";
-  flash.className = [
-    "fixed",
-    "right-4",
-    "top-4",
-    "z-50",
-    "max-w-sm",
-    "rounded-md",
-    "px-4",
-    "py-3",
-    "text-sm",
-    "font-medium",
-    "shadow-lg",
-    type === "error" ? "bg-red-500 text-white" : "bg-emerald-500 text-white",
-  ].join(" ");
-  flash.textContent = message;
-
-  header.appendChild(flash);
-
-  window.setTimeout(() => {
-    flash.remove();
-  }, 3000);
-}
 
 uploadInput.addEventListener("change", () => {
   const files = uploadInput.files;
@@ -142,7 +115,8 @@ async function getStickers(): Promise<void> {
 
       img.src = `/stickers/${sticker}`;
       img.alt = sticker;
-      img.className = "w-10 h-10 object-cover cursor-pointer border-2 border-transparent rounded";
+      img.className =
+        "w-10 h-10 object-cover cursor-pointer border-2 border-transparent rounded";
 
       img.addEventListener("click", () => {
         // Retire la sélection précédente
@@ -170,9 +144,11 @@ async function getStickers(): Promise<void> {
 }
 
 function drawContain(image: HTMLImageElement | HTMLVideoElement): void {
-  const imageWidth = image instanceof HTMLVideoElement ? image.videoWidth : image.width;
+  const imageWidth =
+    image instanceof HTMLVideoElement ? image.videoWidth : image.width;
 
-  const imageHeight = image instanceof HTMLVideoElement ? image.videoHeight : image.height;
+  const imageHeight =
+    image instanceof HTMLVideoElement ? image.videoHeight : image.height;
 
   const imageRatio = imageWidth / imageHeight;
   const canvasRatio = canvas.width / canvas.height;
@@ -253,8 +229,7 @@ function enableDragging(): void {
     const x = (event.clientX - rect.left) * (canvas.width / rect.width);
     const y = (event.clientY - rect.top) * (canvas.height / rect.height);
 
-    if (isMouseOnSticker(x, y))
-    {
+    if (isMouseOnSticker(x, y)) {
       isDragging = true;
       dragOffsetX = x - sticker.x;
       dragOffsetY = y - sticker.y;
@@ -274,8 +249,10 @@ function enableDragging(): void {
 
     const rect = canvas.getBoundingClientRect();
 
-    sticker.x = (event.clientX - rect.left) * (canvas.width / rect.width) - dragOffsetX;
-    sticker.y = (event.clientY - rect.top) * (canvas.height / rect.height) - dragOffsetY;
+    sticker.x =
+      (event.clientX - rect.left) * (canvas.width / rect.width) - dragOffsetX;
+    sticker.y =
+      (event.clientY - rect.top) * (canvas.height / rect.height) - dragOffsetY;
   });
 }
 
@@ -319,17 +296,13 @@ async function capture(): Promise<void> {
 
     const data = await result.json();
     if (!result.ok) {
-      showHeaderMessage(data.error ?? "Capture failed", "error");
+      showHeaderMessage(getErrorMessage(data.error), "error");
       return;
     }
 
-    showHeaderMessage(
-      data.success ?? "Picture created successfully",
-      "success",
-    );
+    showHeaderMessage(getSuccessMessage(data.success), "success");
     renderPictures();
   } catch (error) {
-    console.error("Capture error:", error);
     showHeaderMessage("Capture failed", "error");
   } finally {
     if (stickerImage) captureBtn.disabled = false;
@@ -337,11 +310,9 @@ async function capture(): Promise<void> {
 }
 
 function openDeleteModal(pictureId: string): void {
-
   deleteInput.value = pictureId;
   deleteModal.classList.remove("hidden");
   deleteModal.classList.add("flex");
-
 }
 
 cancelDelete.addEventListener("click", () => {
@@ -349,12 +320,48 @@ cancelDelete.addEventListener("click", () => {
   deleteModal.classList.add("hidden");
 });
 
+deleteForm?.addEventListener("submit", async (event: SubmitEvent) => {
+  event.preventDefault();
+
+  const pictureId = deleteInput.value;
+  if (!pictureId) return;
+
+  confirmDelete.disabled = true;
+
+  try {
+    const result = await fetch("/create/delete", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ pictureId }),
+    });
+
+    const data = await result.json();
+
+    if (!result.ok) {
+      showHeaderMessage(getErrorMessage(data.error), "error");
+      return;
+    }
+
+    document.getElementById(`picture-card-${pictureId}`)?.remove();
+    showHeaderMessage(getSuccessMessage(data.success), "success");
+    deleteModal.classList.remove("flex");
+    deleteModal.classList.add("hidden");
+  } catch (error) {
+    showHeaderMessage(getErrorMessage("internal_server_error"), "error");
+  } finally {
+    confirmDelete.disabled = false;
+  }
+});
+
 async function renderPictures(): Promise<void> {
   try {
     const result = await fetch("/create/user-pictures");
     const data = await result.json();
     if (!result.ok) {
-      showHeaderMessage(data.error ?? "Getting pictures failed", "error");
+      showHeaderMessage(getErrorMessage(data.error), "error");
       return;
     }
     const pictures = data.pictures;
@@ -363,6 +370,7 @@ async function renderPictures(): Promise<void> {
 
     pictures.forEach((pic: any) => {
       const card = document.createElement("div");
+      card.id = `picture-card-${pic._id}`;
       card.className = "relative";
 
       const img = document.createElement("img");
@@ -373,7 +381,8 @@ async function renderPictures(): Promise<void> {
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.textContent = "Delete";
-      deleteBtn.className = "absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded";
+      deleteBtn.className =
+        "absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded";
       deleteBtn.addEventListener("click", () => {
         openDeleteModal(pic._id);
       });

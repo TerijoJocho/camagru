@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createNewAccount, confirmEmail, login, logout, forgotPassword, changePassword, getResetPasswordForm, resetPassword, updateProfile, changeProfilePassword, toggleEmailNotifications } from "../controllers/auth.controller";
+import { createNewAccount, confirmEmail, login, logout, forgotPassword, getResetPasswordForm, resetPassword, updateProfile, changeProfilePassword, toggleEmailNotifications } from "../controllers/auth.controller";
 import { authMiddleware } from "../middlewares/auth.middlewares";
 
 const router = Router();
@@ -14,10 +14,9 @@ router.get("/reset-password", getResetPasswordForm);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 
-router.post("/change-password", authMiddleware, changePassword);
 
 router.post("/change-profile", authMiddleware, updateProfile);
 router.post("/change-profile-password", authMiddleware, changeProfilePassword);
-router.post("/change-user-reference", authMiddleware, toggleEmailNotifications);
+router.post("/change-user-preference", authMiddleware, toggleEmailNotifications);
 
 export default router;

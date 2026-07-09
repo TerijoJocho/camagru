@@ -2,51 +2,102 @@
 <html lang="en">
   <head>
     <%- include('../partials/head'); %>
+    <script type="module" src="/js/signup.js" defer></script>
   </head>
   <body class="">
     <header>
-      <%- include('../partials/header'); %>
-      <%- include('../partials/errorsAndSuccess'); %>
+      <%- include('../partials/header'); %> <%-
+      include('../partials/errorsAndSuccess'); %>
     </header>
 
-
     <main class="flex items-center justify-center min-h-screen">
-      <div class="w-full max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8">
+      <div
+        class="w-full max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8"
+      >
         <div class="mb-7">
-          <h2 class="text-xl font-medium text-gray-900 dark:text-white">Signup</h2>
+          <h2 class="text-xl font-medium text-gray-900 dark:text-white">
+            Signup
+          </h2>
           <p class="text-sm text-gray-400 mt-1">Create your Camagru account</p>
         </div>
 
-        <form method="POST" action="/auth/register" class="space-y-4">
+        <form id="signup-form" class="space-y-4">
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5" for="email">Email</label>
-            <input type="email" name="email" placeholder="camagru@gmail.com" required
-              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <label
+              class="block text-xs font-medium text-gray-500 mb-1.5"
+              for="email"
+              >Email</label
+            >
+            <input
+              type="email"
+              name="email"
+              placeholder="camagru@gmail.com"
+              required
+              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5" for="username">Username</label>
-            <input type="text" name="username" placeholder="camagru" required
-              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <label
+              class="block text-xs font-medium text-gray-500 mb-1.5"
+              for="username"
+              >Username</label
+            >
+            <input
+              type="text"
+              name="username"
+              placeholder="camagru"
+              required
+              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5" for="password">Password</label>
-            <input type="password" name="password" placeholder="************" required
-              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <label
+              class="block text-xs font-medium text-gray-500 mb-1.5"
+              for="password"
+              >Password</label
+            >
+            <input
+              type="password"
+              name="password"
+              placeholder="************"
+              required
+              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5" for="confirmPassword">Confirm your password</label>
-            <input type="password" name="confirmPassword" placeholder="************" required
-              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <label
+              class="block text-xs font-medium text-gray-500 mb-1.5"
+              for="confirmPassword"
+              >Confirm your password</label
+            >
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="************"
+              required
+              class="w-full rounded-md border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
           </div>
-          
-          <button type="submit"
-            class="w-full bg-violet-500 hover:bg-violet-400 text-white rounded-md py-2 text-sm font-medium transition-colors mt-2">
-              Register
+
+          <button id="signup-btn"
+            type="submit"
+            class="w-full bg-violet-500 hover:bg-violet-400 text-white rounded-md py-2 text-sm font-medium transition-colors mt-2"
+          >
+            Register
           </button>
         </form>
 
-        <div class="border-t border-gray-100 dark:border-gray-700 mt-5 pt-5 text-center">
-          <p class="text-xs text-gray-400">Already have an acount? <a href="/pages/login" class="text-violet-500 hover:text-violet-400 font-medium">Log in</a></p>
+        <div
+          class="border-t border-gray-100 dark:border-gray-700 mt-5 pt-5 text-center"
+        >
+          <p class="text-xs text-gray-400">
+            Already have an acount?
+            <a
+              href="/pages/login"
+              class="text-violet-500 hover:text-violet-400 font-medium"
+              >Log in</a
+            >
+          </p>
         </div>
       </div>
     </main>

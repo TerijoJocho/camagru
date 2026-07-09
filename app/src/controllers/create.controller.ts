@@ -7,19 +7,23 @@ import { Picture } from "../models/picture.model";
 
 export const getStickers = async (req: Request, res: Response) => {
   try {
-    const stickersPath = path.join(process.cwd(), "src/public/stickers");
+    const stickersPath = path.join(process.cwd(), "/public/stickers");
+    if (!stickersPath)
+      return res.status(500).json({error: "internal_server_error"});
 
     const files = await fs.readdir(stickersPath);
 
     const stickers = files.filter((file) =>
       /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(file),
     );
+    
+    if (!stickers || stickers.length === 0)
+      return res.status(500).json({error: "error_stickers"});
 
     res.json({ stickers: stickers });
   } catch (err) {
-    res.render("pages/create?error=error_stickers", {
-      error: typeof req.query.error === "string" ? req.query.error : "",
-      success: typeof req.query.success === "string" ? req.query.success : "",
+    return res.status(500).json({
+      error: "internal_server_error",
     });
   }
 };
@@ -29,8 +33,8 @@ export const createCapture = async (req: Request, res: Response) => {
     const userId = res.locals.user._id;
 
     const image = req.body.image;
-    if (!image) 
-      return res.status(400).json({ error: "No image provided" });
+    if (!image)
+      return res.status(400).json({ error: "no_image" });
 
     const base64Data = image.split(",")[1];
     const fileName = `capture_${userId}_${Date.now()}.jpg`;
@@ -47,12 +51,11 @@ export const createCapture = async (req: Request, res: Response) => {
     });
 
     return res.status(201).json({
-      success: "Picture created successfully",
+      success: "capture_created",
       filepath: `/uploads/${fileName}`,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Capture failed" });
+    return res.status(500).json({ error: "internal_server_error" });
   }
 };
 
@@ -66,8 +69,7 @@ export const getUserPictures = async (req: Request, res: Response) => {
       pictures: pictures,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Getting pictures failed" });
+    return res.status(500).json({ error: "internal_server_error" });
   }
 };
 
@@ -80,11 +82,10 @@ export const deletePicture = async (req: Request, res:Response) => {
       userId: res.locals.user._id,
     });
 
-    
     if(!picture)
       {
         return res.status(404).json({
-          error: "Picture not found"
+          error: "post_not_found"
         });  
       }
       
@@ -92,9 +93,12 @@ export const deletePicture = async (req: Request, res:Response) => {
 
     await fs.unlink(filePath);
 
-    return res.redirect("/pages/create?success=picture_deleted");
+    return res.status(200).json({
+      success: "picture_deleted",
+      pictureId,
+    });
   } catch (err) {
     console.error(err);
-    return res.redirect("/pages/create?error=internal_server");
+    return res.status(500).json({ error: "internal_server_error" });
   }
 };
