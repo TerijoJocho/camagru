@@ -15,6 +15,10 @@ async function submitLoginAjax(event: SubmitEvent): Promise<void> {
   if (!loginForm || !loginSubmitBtn) return;
 
   const formData = new FormData(loginForm);
+  const csrfToken =
+    document
+      .querySelector('meta[name="csrf-token"]')
+      ?.getAttribute("content") ?? "";
   const body = Object.fromEntries(formData.entries());
 
   loginSubmitBtn.disabled = true;
@@ -22,10 +26,11 @@ async function submitLoginAjax(event: SubmitEvent): Promise<void> {
   try {
     const response = await fetch("/auth/login", {
       method: "POST",
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
       },
       body: JSON.stringify(body),
     });

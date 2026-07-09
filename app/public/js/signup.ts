@@ -5,7 +5,9 @@ import {
 } from "./feedbacks.js";
 
 const signupForm = document.getElementById("signup-form") as HTMLFormElement;
-const signupSubmitBtn = document.getElementById("signup-btn") as HTMLButtonElement;
+const signupSubmitBtn = document.getElementById(
+  "signup-btn",
+) as HTMLButtonElement;
 
 if (signupForm) {
   signupForm.addEventListener("submit", (e) => {
@@ -18,6 +20,10 @@ async function submitSignupAjax(): Promise<void> {
   if (!signupSubmitBtn) return;
 
   const formData = new FormData(signupForm);
+  const csrfToken =
+    document
+      .querySelector('meta[name="csrf-token"]')
+      ?.getAttribute("content") ?? "";
   const body = Object.fromEntries(formData.entries());
 
   signupSubmitBtn.disabled = true;
@@ -25,10 +31,11 @@ async function submitSignupAjax(): Promise<void> {
   try {
     const response = await fetch("/auth/register", {
       method: "POST",
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",        
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
       },
       body: JSON.stringify(body),
     });

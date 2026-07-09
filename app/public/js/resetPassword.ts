@@ -16,6 +16,10 @@ if (resetPasswordForm && resetPasswordSubmitBtn) {
     event.preventDefault();
 
     const formData = new FormData(resetPasswordForm);
+    const csrfToken =
+      document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content") ?? "";
     const body = Object.fromEntries(formData.entries());
 
     resetPasswordSubmitBtn.disabled = true;
@@ -23,10 +27,11 @@ if (resetPasswordForm && resetPasswordSubmitBtn) {
     try {
       const response = await fetch(resetPasswordForm.action, {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+          "X-CSRF-Token": csrfToken,
         },
         body: JSON.stringify(body),
       });
@@ -41,10 +46,10 @@ if (resetPasswordForm && resetPasswordSubmitBtn) {
       showHeaderMessage(getSuccessMessage(data.success), "success");
       resetPasswordForm.reset();
       if (typeof data.redirect === "string" && data.redirect.length > 0) {
-            window.setTimeout(() => {
-                window.location.href = data.redirect;
-            }, 350);
-        }
+        window.setTimeout(() => {
+          window.location.href = data.redirect;
+        }, 350);
+      }
     } catch (error) {
       showHeaderMessage(getErrorMessage("internal_server_error"), "error");
     } finally {

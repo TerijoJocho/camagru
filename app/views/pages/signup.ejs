@@ -22,7 +22,6 @@
         </div>
 
         <form id="signup-form" class="space-y-4">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div>
             <label
               class="block text-xs font-medium text-gray-500 mb-1.5"
@@ -80,7 +79,8 @@
             />
           </div>
 
-          <button id="signup-btn"
+          <button
+            id="signup-btn"
             type="submit"
             class="w-full bg-violet-500 hover:bg-violet-400 text-white rounded-md py-2 text-sm font-medium transition-colors mt-2"
           >
