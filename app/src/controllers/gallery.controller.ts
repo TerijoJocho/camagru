@@ -147,7 +147,6 @@ export const commentPicture = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error()
     return res.status(500).json({ error: "internal_server_error" });
   }
 };

@@ -104,7 +104,6 @@ export const deletePicture = async (req: Request, res:Response) => {
       pictureId,
     });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "internal_server_error" });
   }
 };

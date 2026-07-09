@@ -92,7 +92,6 @@ export const renderPicture = async (req: Request, res: Response) => {
       success: typeof req.query.success === "string" ? req.query.success : "",
     });
   } catch (error) {
-    console.error(error);
     return res.redirect("/pages/gallery?error=internal_server_error");
   }
 };

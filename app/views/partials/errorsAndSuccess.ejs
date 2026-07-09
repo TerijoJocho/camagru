@@ -48,13 +48,4 @@
   <div id="site-flash" class="fixed right-4 top-4 z-50 max-w-sm rounded-md px-4 py-3 text-sm font-medium shadow-lg <%= messageType === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white' %>">
     <%= message %>
   </div>
-  <script>
-    setTimeout(() => {
-      const flash = document.getElementById('site-flash');
-      if (flash) {
-        flash.remove();
-      }
-    }, 3000);
-    message = "";
-  </script>
 <% } %>
