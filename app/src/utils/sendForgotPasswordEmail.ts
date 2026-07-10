@@ -6,8 +6,8 @@ export const sendForgotPasswordEmail = async (email: string, token: string) => {
       from: '"Camagru Team" <daril.avril@gmail.com>',
       to: email,
       subject: "Password reseting email",
-      text: `Click on this URL to reset your password: https://localhost/auth/reset-password?token=${token}`,
-      html: `<p>Click on this URL to reset your password:</p><p><a href="https://localhost/auth/reset-password?token=${token}">Reset my password</a></p>`,
+      text: `Click on this URL to reset your password: https://localhost:4433/auth/reset-password?token=${token}`,
+      html: `<p>Click on this URL to reset your password:</p><p><a href="https://localhost:4433/auth/reset-password?token=${token}">Reset my password</a></p>`,
     });
 
     console.log("Message sent: %s", info.messageId);
