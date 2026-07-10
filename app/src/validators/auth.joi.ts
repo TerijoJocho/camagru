@@ -13,21 +13,25 @@ export const loginSchema = Joi.object({
 });
 
 export const emailSchema = Joi.object({
+	_csrf: Joi.string().trim(),
     email: Joi.string().trim().email({minDomainSegments: 2, tlds: false}).required(),
 });
 
 export const resetPasswordSchema = Joi.object({
+	_csrf: Joi.string().trim(),
     password: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
     confirmPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
 });
 
 export const changePasswordSchema = Joi.object({
+	_csrf: Joi.string().trim(),
     currentPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
     newPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
     confirmNewPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
 });
 
 export const updateProfileSchema = Joi.object({
+	_csrf: Joi.string().trim(),
     username:Joi.string().trim().alphanum().min(3).max(10).empty('').optional(),
     email:Joi.string().trim().email({ minDomainSegments: 2, tlds: false }).empty('').optional(),
 });
