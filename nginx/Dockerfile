@@ -13,4 +13,4 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -subj "/C=FR/ST=Paris/L=Paris/O=42/OU=Student/CN=camagru"
 
 RUN chown -R 101:101 /etc/nginx/certs /etc/nginx/conf.d
-EXPOSE 443
+EXPOSE 4433

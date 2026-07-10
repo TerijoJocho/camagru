@@ -18,7 +18,7 @@ const port = parseInt(process.env.PORT ?? "3000", 10);
 const mongoUri = process.env.MONGODB_URI ?? "mongodb://mongo:27017/camagru";
 const csrfProtection = csrf({cookie: true});
 
-app.use(helmet());
+app.use(helmet({contentSecurityPolicy: false}));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 app.use(cookieParser());
@@ -62,6 +62,10 @@ app.use("/pages", pagesRoutes);
 app.use("/auth", authRoutes);
 app.use("/create", createRoutes);
 app.use("/gallery", galleryRoutes);
+
+app.get("/", (_req, res) => {
+  res.redirect("/pages/gallery");
+});
 
 async function start() {
   await mongoose.connect(mongoUri);
