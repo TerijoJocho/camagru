@@ -18,11 +18,15 @@
         <!-- ==================== -->
         <section class="flex flex-col gap-4 min-h-0">
           <!-- Webcam / Canvas -->
-          <div class="relative flex-1 overflow-hidden rounded-md bg-black">
+          <div
+            id="webcam-container"
+            class="relative flex-1 overflow-hidden rounded-md bg-black"
+          >
             <video
               id="webcam"
               autoplay
               playsinline
+              muted
               class="absolute inset-0 w-full h-full object-contain"
             ></video>
 
@@ -39,7 +43,7 @@
           <!-- Réglages -->
           <div class="flex gap-6">
             <label class="flex flex-col">
-              Taille
+              Size
               <input
                 id="scale"
                 type="range"
@@ -65,9 +69,17 @@
           <!-- Actions -->
           <div class="flex gap-4 items-center">
             <button
+              id="webcam-toggle"
+              type="button"
+              class=" text-white px-4 py-2 rounded-md"
+            >
+              Disable the webcam
+            </button>
+
+            <button
               id="capture-btn"
+              class="bg-violet-500 text-white px-4 py-2 rounded-md"
               disabled
-              class="bg-violet-500 text-white px-4 py-2 rounded-md opacity-50"
             >
               Capture
             </button>

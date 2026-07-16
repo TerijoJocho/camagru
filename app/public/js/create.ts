@@ -7,19 +7,32 @@ import {
 const video = document.getElementById("webcam") as HTMLVideoElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const captureBtn = document.getElementById("capture-btn") as HTMLButtonElement;
+const webcamToggleBtn = document.getElementById(
+  "webcam-toggle",
+) as HTMLButtonElement;
 const uploadInput = document.getElementById("upload-input") as HTMLInputElement;
-const userPicturesContainer = document.getElementById("user-pictures") as HTMLDivElement;
+const userPicturesContainer = document.getElementById(
+  "user-pictures",
+) as HTMLDivElement;
 const deleteModal = document.getElementById("delete-modal") as HTMLDivElement;
 const deleteForm = document.getElementById("delete-form") as HTMLFormElement;
-const deleteInput = document.getElementById("delete-picture-id") as HTMLInputElement;
-const cancelDelete = document.getElementById("cancel-delete") as HTMLButtonElement;
-const confirmDelete = document.getElementById("confirm-delete") as HTMLButtonElement;
+const deleteInput = document.getElementById(
+  "delete-picture-id",
+) as HTMLInputElement;
+const cancelDelete = document.getElementById(
+  "cancel-delete",
+) as HTMLButtonElement;
+const confirmDelete = document.getElementById(
+  "confirm-delete",
+) as HTMLButtonElement;
 const ctx = canvas.getContext("2d")!;
 const CANVAS_WIDTH = 1280;
 const CANVAS_HEIGHT = 720;
-let isDragging = false;
 
+let isDragging = false;
 let animationId: number | null = null;
+let webcamStream: MediaStream | null = null;
+let webcamEnabled = false;
 
 let stickerImage: HTMLImageElement | null = null;
 
@@ -33,6 +46,78 @@ let sticker = {
 let baseImage: HTMLVideoElement | HTMLImageElement | null = video;
 let mode: "webcam" | "upload" = "webcam";
 
+function updateCaptureButtonState(): void {
+  const hasSource = mode === "upload" || webcamEnabled;
+  const isEnabled = Boolean(stickerImage && hasSource);
+
+  captureBtn.disabled = !isEnabled;
+  captureBtn.classList.toggle("opacity-50", !isEnabled);
+}
+
+function updateWebcamToggleLabel(): void {
+  webcamToggleBtn.textContent = webcamEnabled
+    ? "Disable the webcam"
+    : "Activate the webcam";
+
+  webcamToggleBtn.classList.toggle("bg-gray-500", webcamEnabled);
+  webcamToggleBtn.classList.toggle("bg-green-500", !webcamEnabled);
+}
+
+function stopWebcamStream(): void {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+    webcamStream = null;
+  }
+
+  video.srcObject = null;
+  video.classList.add("hidden");
+  webcamEnabled = false;
+  updateWebcamToggleLabel();
+  updateCaptureButtonState();
+}
+
+async function startWebcamStream(): Promise<void> {
+  mode = "webcam";
+  baseImage = video;
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    stopWebcamStream();
+    showHeaderMessage(
+      "La webcam n'est pas supportée sur ce navigateur.",
+      "error",
+    );
+    startRendering();
+    return;
+  }
+
+  try {
+    webcamStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: CANVAS_WIDTH },
+        height: { ideal: CANVAS_HEIGHT },
+      },
+    });
+
+    video.srcObject = webcamStream;
+    video.classList.remove("hidden");
+    await video.play();
+    webcamEnabled = true;
+    updateWebcamToggleLabel();
+    updateCaptureButtonState();
+    startRendering();
+  } catch (error) {
+    stopWebcamStream();
+    mode = "webcam";
+    baseImage = null;
+    const reason =
+      error instanceof DOMException && error.name === "NotAllowedError"
+        ? "Camera access denied — use the upload button below."
+        : "Unable to activate the webcam at the moment.";
+    showHeaderMessage(reason, "error");
+    startRendering();
+  }
+}
+
 uploadInput.addEventListener("change", () => {
   const files = uploadInput.files;
   const file = files ? files[0] : null;
@@ -45,11 +130,7 @@ uploadInput.addEventListener("change", () => {
     mode = "upload";
     baseImage = img;
 
-    const stream = video.srcObject as MediaStream | null;
-    if (stream) {
-      stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
-    }
-    video.srcObject = null;
+    stopWebcamStream();
 
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
@@ -57,59 +138,56 @@ uploadInput.addEventListener("change", () => {
     sticker.x = canvas.width / 2;
     sticker.y = canvas.height / 2;
 
-    stopRendering();
+    updateCaptureButtonState();
     startRendering();
   };
 });
 
 async function getVideo(): Promise<void> {
-  mode = "webcam";
-  baseImage = video;
   if (!video) return;
 
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    video.src = "fallbackvideo.webm";
-    return;
-  }
-
   captureBtn.addEventListener("click", () => {
-    capture();
+    void capture();
   });
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { exact: 1280 }, height: { exact: 720 } },
-    });
+  webcamToggleBtn.addEventListener("click", async () => {
+    webcamToggleBtn.disabled = true;
 
-    video.srcObject = stream;
+    try {
+      if (webcamEnabled) {
+        stopWebcamStream();
+        startRendering();
+        return;
+      }
 
-    video.addEventListener("loadedmetadata", () => {
-      if (mode !== "webcam") return;
+      await startWebcamStream();
+    } finally {
+      webcamToggleBtn.disabled = false;
+    }
+  });
 
-      canvas.width = CANVAS_WIDTH;
-      canvas.height = CANVAS_HEIGHT;
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
 
-      startRendering();
-    });
-  } catch (error) {
-    console.error("Webcam access denied:", error);
-    video.src = "fallbackvideo.webm";
-  }
+  await startWebcamStream();
 }
 
 async function getStickers(): Promise<void> {
   const container = document.getElementById("sticker-list");
-  const captureBtn = document.getElementById(
-    "capture-btn",
-  ) as HTMLButtonElement;
 
-  if (!container || !captureBtn) return;
+  if (!container) return;
 
   try {
     const response = await fetch("/create/stickers", {
       method: "GET",
-      headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "" },
+      headers: {
+        "X-CSRF-Token":
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") ?? "",
+      },
     });
+
     const data = await response.json();
     const stickers: string[] = data.stickers;
 
@@ -122,21 +200,18 @@ async function getStickers(): Promise<void> {
         "w-10 h-10 object-cover cursor-pointer border-2 border-transparent rounded";
 
       img.addEventListener("click", () => {
-        // Retire la sélection précédente
         container.querySelectorAll("img").forEach((image) => {
           image.classList.remove("border-violet-400");
           image.classList.add("border-transparent");
         });
 
-        // Sélectionne le sticker courant
         img.classList.remove("border-transparent");
         img.classList.add("border-violet-400");
 
         stickerImage = new Image();
         stickerImage.src = `/stickers/${sticker}`;
 
-        captureBtn.disabled = false;
-        captureBtn.classList.remove("opacity-50");
+        updateCaptureButtonState();
       });
 
       container.appendChild(img);
@@ -152,6 +227,8 @@ function drawContain(image: HTMLImageElement | HTMLVideoElement): void {
 
   const imageHeight =
     image instanceof HTMLVideoElement ? image.videoHeight : image.height;
+
+  if (!imageWidth || !imageHeight) return;
 
   const imageRatio = imageWidth / imageHeight;
   const canvasRatio = canvas.width / canvas.height;
@@ -177,14 +254,24 @@ function drawContain(image: HTMLImageElement | HTMLVideoElement): void {
 }
 
 function startRendering(): void {
+  if (animationId !== null) return;
+
   const render = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (mode === "webcam" && video) {
-      ctx.save();
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-      ctx.restore();
+    if (mode === "webcam") {
+      if (
+        webcamEnabled &&
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+      ) {
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
     } else if (mode === "upload" && baseImage) {
       drawContain(baseImage);
     }
@@ -194,14 +281,25 @@ function startRendering(): void {
       ctx.translate(sticker.x, sticker.y);
       ctx.rotate(sticker.rotation);
       ctx.scale(sticker.scale, sticker.scale);
-      ctx.drawImage(stickerImage, -stickerImage.width / 2, -stickerImage.height / 2);
+      ctx.drawImage(
+        stickerImage,
+        -stickerImage.width / 2,
+        -stickerImage.height / 2,
+      );
       ctx.restore();
     }
 
     animationId = requestAnimationFrame(render);
   };
 
-  render();
+  animationId = requestAnimationFrame(render);
+}
+
+function stopRendering(): void {
+  if (animationId !== null) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
 }
 
 function isMouseOnSticker(mouseX: number, mouseY: number): boolean {
@@ -270,13 +368,6 @@ function setupControls(): void {
   });
 }
 
-function stopRendering(): void {
-  if (animationId) {
-    cancelAnimationFrame(animationId);
-    animationId = null;
-  }
-}
-
 async function capture(): Promise<void> {
   captureBtn.disabled = true;
 
@@ -287,7 +378,10 @@ async function capture(): Promise<void> {
       method: "POST",
       headers: {
         "Content-type": "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+        "X-CSRF-Token":
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") ?? "",
       },
       body: JSON.stringify({
         image: imageBase64,
@@ -305,7 +399,7 @@ async function capture(): Promise<void> {
   } catch (error) {
     showHeaderMessage("Capture failed", "error");
   } finally {
-    if (stickerImage) captureBtn.disabled = false;
+    updateCaptureButtonState();
   }
 }
 
@@ -334,7 +428,10 @@ deleteForm?.addEventListener("submit", async (event: SubmitEvent) => {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+        "X-CSRF-Token":
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") ?? "",
       },
       body: JSON.stringify({ pictureId }),
     });
@@ -361,7 +458,12 @@ async function renderPictures(): Promise<void> {
   try {
     const result = await fetch("/create/user-pictures", {
       method: "GET",
-      headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "" },
+      headers: {
+        "X-CSRF-Token":
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") ?? "",
+      },
     });
     const data = await result.json();
     if (!result.ok) {
@@ -379,7 +481,6 @@ async function renderPictures(): Promise<void> {
 
       const img = document.createElement("img");
       img.src = `/uploads/${pic.filepath}`;
-      // img.alt = pic; //mettre la description de la picture a terme
       img.className = "w-full aspect-square object-cover rounded-md";
 
       const deleteBtn = document.createElement("button");
