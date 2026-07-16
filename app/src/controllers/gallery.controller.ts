@@ -46,6 +46,7 @@ export const getPictures = async (req: Request, res: Response) => {
         likesCount: pic.likes.length,
         comments: (pic.comments as any[]).map((comment) => ({
           _id: comment._id,
+          userId: comment.userId,
           author: comment.userId?.username,
           content: comment.content,
           createdAt: comment.createdAt,
@@ -141,6 +142,7 @@ export const commentPicture = async (req: Request, res: Response) => {
       success: "comment_added",
       comment: {
         _id: newComment._id,
+        userId: newComment.userId,
         content,
         author: res.locals.user?.username,
         createdAt: newComment.createdAt,

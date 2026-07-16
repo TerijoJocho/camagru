@@ -5,14 +5,27 @@ import {
 } from "./feedbacks.js";
 
 const likeForm = document.getElementById("like-form") as HTMLFormElement | null;
-const likeCount = document.getElementById("like-count") as HTMLSpanElement | null;
+const likeCount = document.getElementById(
+  "like-count",
+) as HTMLSpanElement | null;
 const likeIcon = document.getElementById("like-icon") as HTMLElement | null;
 
-const commentForm = document.getElementById("comment-form") as HTMLFormElement | null;
-const commentInput = document.getElementById("comment-input") as HTMLTextAreaElement | null;
-const commentsList = document.getElementById("comments-list") as HTMLDivElement | null;
+const commentForm = document.getElementById(
+  "comment-form",
+) as HTMLFormElement | null;
+const commentInput = document.getElementById(
+  "comment-input",
+) as HTMLTextAreaElement | null;
+const commentsList = document.getElementById(
+  "comments-list",
+) as HTMLDivElement | null;
 
-const deleteBtns = document.querySelectorAll<HTMLButtonElement>(".delete-comment-btn");
+const currentUserId =
+  document.querySelector('meta[name="user-id"]')?.getAttribute("content") ?? "";
+
+const deleteBtns = document.querySelectorAll<HTMLButtonElement>(
+  ".delete-comment-btn",
+);
 
 function wireDeleteCommentButton(btn: HTMLButtonElement): void {
   btn.addEventListener("click", async () => {
@@ -22,12 +35,16 @@ function wireDeleteCommentButton(btn: HTMLButtonElement): void {
     if (!commentId || !pictureId) return;
 
     try {
-      const res = await fetch(`/gallery/pictures/${pictureId}/comment/${commentId}`,
+      const res = await fetch(
+        `/gallery/pictures/${pictureId}/comment/${commentId}`,
         {
           method: "DELETE",
           headers: {
             Accept: "application/json",
-            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+            "X-CSRF-Token":
+              document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content") ?? "",
           },
         },
       );
@@ -61,7 +78,10 @@ likeForm?.addEventListener("submit", async (event) => {
       method: "POST",
       headers: {
         Accept: "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+        "X-CSRF-Token":
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") ?? "",
       },
     });
 
@@ -104,7 +124,10 @@ commentForm?.addEventListener("submit", async (event) => {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+        "X-CSRF-Token":
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") ?? "",
       },
       body: JSON.stringify({ comment: content }),
     });
@@ -125,36 +148,45 @@ commentForm?.addEventListener("submit", async (event) => {
       headerRow.className = "flex items-center";
 
       const author = document.createElement("p");
-      author.className = "text-base font-medium px-2 py-1 rounded bg-violet-100 m-2";
+      author.className =
+        "text-base font-medium px-2 py-1 rounded bg-violet-100 m-2";
       author.textContent = data.comment.author ?? "You";
 
       const date = document.createElement("p");
       date.className = "text-xs flex-1 px-2 py-1 italic text-gray-300";
-      date.textContent = new Date(data.comment.createdAt).toLocaleDateString("en-EN");
+      date.textContent = new Date(data.comment.createdAt).toLocaleDateString(
+        "en-EN",
+      );
 
       const content = document.createElement("p");
       content.className = "m-2";
       content.textContent = data.comment.content;
 
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "delete-comment-btn absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded";
-      deleteButton.dataset.commentId = data.comment._id;
-      deleteButton.dataset.pictureId = commentForm?.dataset.pictureId ?? "";
-      deleteButton.innerHTML = '<i class="fa-regular fa-trash-can"></i>';
-      wireDeleteCommentButton(deleteButton);
-
       headerRow.appendChild(author);
       headerRow.appendChild(date);
       comment.appendChild(headerRow);
-      comment.appendChild(deleteButton);
-      comment.appendChild(content);
 
+      // Only add delete button if the comment belongs to the current user
+      if (data.comment.userId && data.comment.userId.toString() === currentUserId.toString()) {
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className =
+          "delete-comment-btn absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded";
+        deleteButton.dataset.commentId = data.comment._id;
+        deleteButton.dataset.pictureId = commentForm?.dataset.pictureId ?? "";
+        deleteButton.innerHTML = '<i class="fa-regular fa-trash-can"></i>';
+        wireDeleteCommentButton(deleteButton);
+        comment.appendChild(deleteButton);
+      }
+
+      comment.appendChild(content);
       commentsList.prepend(comment);
       commentInput.value = "";
     }
 
     showHeaderMessage(getSuccessMessage(data.success), "success");
+    console.log(currentUserId);
+    console.log(data.comment.userId.toString());
   } catch (error) {
     showHeaderMessage(getErrorMessage("internal_server_error"), "error");
   }

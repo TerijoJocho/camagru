@@ -12,9 +12,9 @@
     </header>
 
     <main class="flex-1 p-8">
-        <div class="flex flex-col lg:flex-row gap-3 justify-between">
+        <div class="flex flex-col gap-3 items-center">
 			<!-- Image -->
-			<div class="bg-white rounded-md shadow-md w-full lg:max-w-lg lg:flex-shrink-0 overflow-hidden flex flex-col">
+			<div class="bg-white rounded-md shadow-md w-full lg:max-w-[850px] lg:flex-shrink-0 overflow-hidden flex flex-col">
 				<img
                     class="w-full min-h-[300px] lg:min-h-[450px] max-h-[450px] object-cover flex-1"
                     src="<%= post.filepath.startsWith('/uploads/') ? post.filepath : `/uploads/${post.filepath}` %>"
@@ -39,29 +39,31 @@
                         </button>
                     </form>
                 </div>
-
-
             </div>
 
             <!-- Commentaires -->
-            <div class="flex flex-col justify-between gap-6 w-full lg:max-w-md borde">
+            <div class="flex flex-col justify-between gap-6 w-full lg:max-w-[850px] ">
                 <div id="comments-list" class="flex-1 p-3 max-h-80 overflow-y-auto space-y-2 bg-white/30 backdrop-blur-sm rounded-md">
-                    <% post.comments.forEach(comment => { %>
-                        <div class="border rounded-md bg-white flex flex-col relative" id="comment-<%= comment._id %>">
-                            <div class="flex items-center">
-                                <p class="text-base font-medium px-2 py-1 rounded bg-violet-100 m-2"> <%= comment.userId.username %> </p>
-                                <p class="text-xs flex-1 px-2 py-1 italic text-gray-300"> <%= new Date(comment.createdAt).toLocaleDateString('en-EN') %> </p>
+                    <% if (post.comments.length === 0) { %>
+                        <p class="m-2 text-sm px-2 py-1 italic text-gray-500">No comments</p>
+                    <% } else { %>
+                        <% post.comments.forEach(comment => { %>
+                            <div class="border rounded-md bg-white flex flex-col relative" id="comment-<%= comment._id %>">
+                                <div class="flex items-center">
+                                    <p class="text-base font-medium px-2 py-1 rounded bg-violet-100 m-2"> <%= comment.userId.username %> </p>
+                                    <p class="text-xs flex-1 px-2 py-1 italic text-gray-300"> <%= new Date(comment.createdAt).toLocaleDateString('en-EN') %> </p>
+                                </div>
+                                <% if (comment.userId._id.toString() === user._id.toString()) {%>
+                                    <button data-comment-id="<%= comment._id %>" data-picture-id="<%= comment.pictureId %>" class="delete-comment-btn absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                <% } %>
+                                <p class="m-2">
+                                    <%= comment.content %>
+                                </p>
                             </div>
-                            <% if (comment.userId._id.toString() === user._id.toString()) {%>
-                                <button data-comment-id="<%= comment._id %>" data-picture-id="<%= comment.pictureId %>" class="delete-comment-btn absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            <% } %>
-                            <p class="m-2">
-                                <%= comment.content %>
-                            </p>
-                        </div>
-                    <% }) %>
+                        <% }) %>
+                    <% } %>
                 </div>
 
                 <form id="comment-form" data-picture-id="<%= post._id %>" method="POST" action="/gallery/pictures/<%= post._id %>/comment">
