@@ -14,7 +14,7 @@ services:
   app:
     build:
       context: ./app
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile.dev
     container_name: app
     stdin_open: true
     tty: true
