@@ -12,9 +12,9 @@
     </header>
 
     <main class="flex-1 p-8">
-        <div class="flex flex-col lg:flex-row gap-3 justify-between border border-yellow-600">
+        <div class="flex flex-col lg:flex-row gap-3 justify-between">
 			<!-- Image -->
-			<div class="bg-white rounded-md shadow-md w-full lg:max-w-lg lg:flex-shrink-0 overflow-hidden flex flex-col border border-blue-600">
+			<div class="bg-white rounded-md shadow-md w-full lg:max-w-lg lg:flex-shrink-0 overflow-hidden flex flex-col">
 				<img
                     class="w-full min-h-[300px] lg:min-h-[450px] max-h-[450px] object-cover flex-1"
                     src="<%= post.filepath.startsWith('/uploads/') ? post.filepath : `/uploads/${post.filepath}` %>"
@@ -24,7 +24,7 @@
                 <!-- Header -->
                 <div class="flex items-center justify-between p-3 border-b">
                     <span class="bg-violet-100 text-xs font-medium px-2 py-1 rounded">
-                    <%= post.userId.username %>
+                        <%= post.userId.username %>
                     </span>
 
                     <form id="like-form" method="POST" action="/gallery/pictures/<%= post._id %>/like">
@@ -44,7 +44,7 @@
             </div>
 
             <!-- Commentaires -->
-            <div class="flex flex-col justify-between gap-6 w-full lg:max-w-md border border-pink-600">
+            <div class="flex flex-col justify-between gap-6 w-full lg:max-w-md borde">
                 <div id="comments-list" class="flex-1 p-3 max-h-80 overflow-y-auto space-y-2 bg-white/30 backdrop-blur-sm rounded-md">
                     <% post.comments.forEach(comment => { %>
                         <div class="border rounded-md bg-white flex flex-col relative" id="comment-<%= comment._id %>">
