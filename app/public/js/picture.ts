@@ -185,8 +185,6 @@ commentForm?.addEventListener("submit", async (event) => {
     }
 
     showHeaderMessage(getSuccessMessage(data.success), "success");
-    console.log(currentUserId);
-    console.log(data.comment.userId.toString());
   } catch (error) {
     showHeaderMessage(getErrorMessage("internal_server_error"), "error");
   }
