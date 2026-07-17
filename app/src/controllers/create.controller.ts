@@ -112,33 +112,13 @@ export const createCapture = async (req: Request, res: Response) => {
       Math.max(0, CANVAS_HEIGHT - stickerInfo.height),
     );
 
-	const { info } = await background
-    .png()
-    .toBuffer({ resolveWithObject: true });
-
-	const infoWidth = info.width;
-	const infoHeight = info.height
-
-	console.log({
-		infoWidth,
-		infoHeight,
-		scaledWidth,
-		scaledHeight,
-		stickerWidth: stickerInfo.width,
-		stickerHeight: stickerInfo.height,
-		left,
-		top,
-	});
-
     const fileName = `capture_${userId}_${Date.now()}.jpg`;
     const filePath = path.join(process.cwd(), "uploads", fileName);
 
-    const bgMeta = await background
+    await background
 	.composite([{ input: stickerBuffer, left, top }])
 	.jpeg({ quality: 80 })
 	.toFile(filePath);
-
-	console.log(bgMeta.width, bgMeta.height);
 
     await Picture.create({ userId, filepath: fileName });
 

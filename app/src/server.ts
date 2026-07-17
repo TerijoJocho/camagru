@@ -35,6 +35,7 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.set("view engine", "ejs");
 app.set("views", path.join(process.cwd(), "views"));
+app.set('trust proxy', true);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

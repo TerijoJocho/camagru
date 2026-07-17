@@ -8,7 +8,7 @@ const router = Router();
 router.use(pagesMiddleware);
 
 router.get("/gallery", renderGalleryPage);
-router.get("/gallery/:id", authMiddleware, renderPicture);
+router.get("/gallery/:id", renderPicture);
 router.get("/signup", renderSignupPage);
 router.get("/login", renderLoginPage);
 router.get("/forgotPassword", renderForgotPasswordPage);
