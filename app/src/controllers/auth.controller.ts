@@ -114,10 +114,12 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    const email = value.email;
+    const identifier = value.identifier;
     const password = value.password;
 
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({
+		$or: [{email: identifier}, {username: identifier}],
+	});
     if (!user) {
       return res.status(404).json({
         error: "user_not_found",

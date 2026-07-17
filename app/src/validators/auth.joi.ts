@@ -8,7 +8,10 @@ export const registerSchema = Joi.object({
 });
 
 export const loginSchema = Joi.object({
-    email: Joi.string().trim().email({ minDomainSegments: 2, tlds: false }).required(),
+	identifier: Joi.alternatives().try(
+		Joi.string().trim().email({minDomainSegments: 2, tlds: false}),
+		Joi.string().trim().alphanum().min(3).max(10),
+	).required(),
     password: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
 });
 
