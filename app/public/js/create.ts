@@ -7,24 +7,16 @@ import {
 const video = document.getElementById("webcam") as HTMLVideoElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const captureBtn = document.getElementById("capture-btn") as HTMLButtonElement;
-const webcamToggleBtn = document.getElementById(
-  "webcam-toggle",
-) as HTMLButtonElement;
+const webcamToggleBtn = document.getElementById("webcam-toggle") as HTMLButtonElement;
 const uploadInput = document.getElementById("upload-input") as HTMLInputElement;
-const userPicturesContainer = document.getElementById(
-  "user-pictures",
-) as HTMLDivElement;
+const userPicturesContainer = document.getElementById("user-pictures") as HTMLDivElement;
 const deleteModal = document.getElementById("delete-modal") as HTMLDivElement;
 const deleteForm = document.getElementById("delete-form") as HTMLFormElement;
-const deleteInput = document.getElementById(
-  "delete-picture-id",
-) as HTMLInputElement;
-const cancelDelete = document.getElementById(
-  "cancel-delete",
-) as HTMLButtonElement;
-const confirmDelete = document.getElementById(
-  "confirm-delete",
-) as HTMLButtonElement;
+const deleteInput = document.getElementById("delete-picture-id") as HTMLInputElement;
+const cancelDelete = document.getElementById("cancel-delete") as HTMLButtonElement;
+const confirmDelete = document.getElementById("confirm-delete") as HTMLButtonElement;
+const scaleInput = document.getElementById("scale") as HTMLInputElement;
+const rotationInput = document.getElementById("rotation") as HTMLInputElement;
 const ctx = canvas.getContext("2d")!;
 const CANVAS_WIDTH = 1280;
 const CANVAS_HEIGHT = 720;
@@ -35,6 +27,7 @@ let webcamStream: MediaStream | null = null;
 let webcamEnabled = false;
 
 let stickerImage: HTMLImageElement | null = null;
+let selectedStickerFilename: string | null = null;
 
 let sticker = {
   x: 300,
@@ -45,6 +38,45 @@ let sticker = {
 
 let baseImage: HTMLVideoElement | HTMLImageElement | null = video;
 let mode: "webcam" | "upload" = "webcam";
+
+function computeMaxStickerScale(rotationRadians: number = sticker.rotation): number {
+  if (!stickerImage || !stickerImage.complete || !stickerImage.width || !stickerImage.height) {
+    return 2;
+  }
+
+  const sin = Math.abs(Math.sin(rotationRadians));
+  const cos = Math.abs(Math.cos(rotationRadians));
+  const rotatedWidthAtScaleOne = stickerImage.width * cos + stickerImage.height * sin;
+  const rotatedHeightAtScaleOne = stickerImage.width * sin + stickerImage.height * cos;
+
+  if (!rotatedWidthAtScaleOne || !rotatedHeightAtScaleOne) {
+    return 0.1;
+  }
+
+  return Math.max(
+    0.1,
+    Math.min(2, CANVAS_WIDTH / rotatedWidthAtScaleOne, CANVAS_HEIGHT / rotatedHeightAtScaleOne),
+  );
+}
+
+function syncScaleInputBounds(): void {
+  if (!scaleInput) return;
+
+  const maxScale = Math.max(0.1, computeMaxStickerScale());
+  const minScale = maxScale < 0.2 ? 0.1 : 0.2;
+
+  scaleInput.min = minScale.toFixed(1);
+  scaleInput.max = maxScale.toFixed(2);
+
+  const currentScale = Number(scaleInput.value);
+  const boundedScale = Math.min(Math.max(currentScale, minScale), maxScale);
+
+  if (boundedScale !== currentScale) {
+    scaleInput.value = boundedScale.toFixed(2);
+  }
+
+  sticker.scale = boundedScale;
+}
 
 function updateCaptureButtonState(): void {
   const hasSource = mode === "upload" || webcamEnabled;
@@ -209,8 +241,14 @@ async function getStickers(): Promise<void> {
         img.classList.add("border-violet-400");
 
         stickerImage = new Image();
+        stickerImage.onload = () => {
+          syncScaleInputBounds();
+          updateCaptureButtonState();
+        };
         stickerImage.src = `/stickers/${sticker}`;
+		selectedStickerFilename = sticker;
 
+        syncScaleInputBounds();
         updateCaptureButtonState();
       });
 
@@ -221,12 +259,9 @@ async function getStickers(): Promise<void> {
   }
 }
 
-function drawContain(image: HTMLImageElement | HTMLVideoElement): void {
-  const imageWidth =
-    image instanceof HTMLVideoElement ? image.videoWidth : image.width;
-
-  const imageHeight =
-    image instanceof HTMLVideoElement ? image.videoHeight : image.height;
+function drawContain(image: HTMLImageElement | HTMLVideoElement, targetCtx: CanvasRenderingContext2D = ctx): void {
+  const imageWidth = image instanceof HTMLVideoElement ? image.videoWidth : image.width;
+  const imageHeight = image instanceof HTMLVideoElement ? image.videoHeight : image.height;
 
   if (!imageWidth || !imageHeight) return;
 
@@ -250,7 +285,7 @@ function drawContain(image: HTMLImageElement | HTMLVideoElement): void {
     y = (canvas.height - drawHeight) / 2;
   }
 
-  ctx.drawImage(image, x, y, drawWidth, drawHeight);
+  targetCtx.drawImage(image, x, y, drawWidth, drawHeight);
 }
 
 function startRendering(): void {
@@ -354,53 +389,76 @@ function enableDragging(): void {
 }
 
 function setupControls(): void {
-  const scaleInput = document.getElementById("scale") as HTMLInputElement;
-  const rotationInput = document.getElementById("rotation") as HTMLInputElement;
-
   if (!scaleInput || !rotationInput) return;
 
   scaleInput.addEventListener("input", () => {
-    sticker.scale = Number(scaleInput.value);
+    sticker.scale = Math.min(Number(scaleInput.value), computeMaxStickerScale());
   });
 
   rotationInput.addEventListener("input", () => {
     sticker.rotation = (Number(rotationInput.value) * Math.PI) / 180;
+    syncScaleInputBounds();
   });
+
+  syncScaleInputBounds();
+}
+
+function captureBackgroundDataURL(): string {
+  const bgCanvas = document.createElement("canvas");
+  bgCanvas.width = CANVAS_WIDTH;
+  bgCanvas.height = CANVAS_HEIGHT;
+  const bgCtx = bgCanvas.getContext("2d")!;
+
+  if (mode === "webcam" && webcamEnabled) {
+    bgCtx.save();
+    bgCtx.scale(-1, 1);
+    bgCtx.drawImage(video, -CANVAS_WIDTH, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    bgCtx.restore();
+  } else if (mode === "upload" && baseImage) {
+    drawContain(baseImage, bgCtx);
+  }
+
+  return bgCanvas.toDataURL("image/jpeg", 0.9);
 }
 
 async function capture(): Promise<void> {
-  captureBtn.disabled = true;
+	if (!stickerImage || !selectedStickerFilename) return;
 
-  const imageBase64 = canvas.toDataURL("image/jpeg", 0.9);
+	captureBtn.disabled = true;
 
-  try {
-    const result = await fetch("/create/capture", {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-        "X-CSRF-Token":
-          document
-            .querySelector('meta[name="csrf-token"]')
-            ?.getAttribute("content") ?? "",
-      },
-      body: JSON.stringify({
-        image: imageBase64,
-      }),
-    });
+	const backgroundDataUrl = captureBackgroundDataURL();
+	const rotateDegrees = (sticker.rotation * 180) / Math.PI;
 
-    const data = await result.json();
-    if (!result.ok) {
-      showHeaderMessage(getErrorMessage(data.error), "error");
-      return;
-    }
+	try {
+	  const result = await fetch("/create/capture", {
+		method: "POST",
+		headers: {
+			"Content-type": "application/json",
+			"X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
+		},
+		body: JSON.stringify({
+				image: backgroundDataUrl,
+				sticker: selectedStickerFilename,
+				x: sticker.x,
+				y: sticker.y,
+				scale: sticker.scale,
+				rotation: rotateDegrees,
+			}),
+		});
 
-    showHeaderMessage(getSuccessMessage(data.success), "success");
-    renderPictures();
-  } catch (error) {
-    showHeaderMessage("Capture failed", "error");
-  } finally {
-    updateCaptureButtonState();
-  }
+		const data = await result.json();
+		if (!result.ok) {
+		  showHeaderMessage(getErrorMessage(data.error), "error");
+		  return;
+		}
+
+		showHeaderMessage(getSuccessMessage(data.success), "success");
+		renderPictures();
+	} catch (error) {
+		showHeaderMessage("Capture failed", "error");
+	} finally {
+		updateCaptureButtonState();
+	}
 }
 
 function openDeleteModal(pictureId: string): void {
