@@ -127,7 +127,6 @@ export const createCapture = async (req: Request, res: Response) => {
       filepath: `/uploads/${fileName}`,
     });
   } catch (err) {
-	console.log("createCapture error:",err)
     return res.status(500).json({ error: "internal_server_error" });
   }
 };

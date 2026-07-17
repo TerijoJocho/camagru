@@ -10,8 +10,10 @@ export const sendForgotPasswordEmail = async (email: string, token: string) => {
       html: `<p>Click on this URL to reset your password:</p><p><a href="https://localhost:4433/auth/reset-password?token=${token}">Reset my password</a></p>`,
     });
 
-    console.log("Message sent: %s", info.messageId);
+    // console.log("Message sent: %s", info.messageId);
+	void info;
   } catch (err) {
-    console.error("Error while sending mail:", err);
+    // console.error("Error while sending mail:", err);
+	void err;
   }
 };

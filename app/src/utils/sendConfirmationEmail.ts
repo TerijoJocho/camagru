@@ -10,8 +10,10 @@ export const sendConfirmationEmail = async (email: string, token: string) => {
       html: `<p>Please click on this URL to confirm your email:</p><p><a href="https://localhost:4433/auth/confirm?token=${token}">Confirm my email</a></p>`,
     });
 
-    console.log("Message sent: %s", info.messageId);
+    // console.log("Message sent: %s", info.messageId);
+	void info;
   } catch (err) {
-    console.error("Error while sending mail:", err);
+    // console.error("Error while sending mail:", err);
+	void err;
   }
 };

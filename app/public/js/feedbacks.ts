@@ -24,7 +24,7 @@ const errorMessages: Record<string, string> = {
 	error_stickers: "Unable to load stickers.",
 	invalid_file_type: "Your file must be .jpeg, .png or .webp.",
 	too_many_requests: "Too many attempts. Please wait a few minutes and try again.",
-	test_log: "error here",
+	// test_log: "error here",
 	no_sticker: "Please select a sticker.",
 	invalid_sticker: "This sticker doesn't exist.",
 	invalid_sticker_transform: "Invalid sticker placement.",

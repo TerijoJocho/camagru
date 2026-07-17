@@ -13,9 +13,10 @@ export const emailTransporter = nodemailer.createTransport({
 export const initEmailTransporter = async () => {
   try {
     await emailTransporter.verify();
-    console.log("Server is ready to take our messages");
+    // console.log("Server is ready to take our messages");
   } catch (err) {
-    console.error("Verification failed:", err);
+    // console.error("Verification failed:", err);
+	void err;
   }
 
   return emailTransporter;

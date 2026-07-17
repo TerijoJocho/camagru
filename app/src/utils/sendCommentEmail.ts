@@ -10,8 +10,10 @@ export const sendCommentEmail = async (email: string, sender: string, content: s
       html: `<p>${sender} comment one of your picture: ${content}</p>`,
     });
 
-    console.log("Message sent: %s", info.messageId);
+    // console.log("Message sent: %s", info.messageId);
+	void info;
   } catch (err) {
-    console.error("Error while sending mail:", err);
+    // console.error("Error while sending mail:", err);
+	void err;
   }
 };

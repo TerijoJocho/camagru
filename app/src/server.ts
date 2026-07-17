@@ -73,11 +73,12 @@ async function start() {
   await initEmailTransporter();
 
   app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+    // console.log(`Server listening on port ${port}`);
+	void port;
   });
 }
 
 start().catch((error) => {
-  console.error("Failed to start server:", error);
+//   console.error("Failed to start server:", error);
   process.exit(1);
 });
