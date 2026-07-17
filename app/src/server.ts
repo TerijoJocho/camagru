@@ -27,7 +27,7 @@ app.use(express.static(path.join(process.cwd(), "dist/public")));
 app.use(express.static(path.join(process.cwd(), "public")));
 app.use(
   cors({
-    origin: "http://localhost:3000", // à changer
+    origin: "https://localhost:4433",
     credentials: true,
   }),
 );
@@ -55,9 +55,9 @@ app.use("/create/delete", authLimiter);
 app.use("/gallery/pictures/:id/like", authLimiter);
 app.use("/gallery/pictures/:id/comment", authLimiter);
 app.use("/gallery/pictures/:id/comment/:commentId", authLimiter);
-app.use("auth/change-profile", authLimiter);
-app.use("auth/change-profile-password", authLimiter);
-app.use("auth/change-user-preference", authLimiter);
+app.use("/auth/change-profile", authLimiter);
+app.use("/auth/change-profile-password", authLimiter);
+app.use("/auth/change-user-preference", authLimiter);
 
 app.use("/pages", pagesRoutes);
 app.use("/auth", authRoutes);

@@ -6,17 +6,6 @@ import { commentSchema } from "../validators/gallery.joi";
 import { sendCommentEmail } from "../utils/sendCommentEmail";
 
 /*
- * renvoie la page HTML de base (juste le squelette, sans images)
- * accessible à tous
- */
-export const initGallery = (req: Request, res: Response) => {
-  return res.status(200).json({
-    success: "gallery_ready",
-    redirect: "/pages/gallery",
-  });
-};
-
-/*
  * renvoie du JSON avec les 5 images
  * appelée par JavaScript après le chargement de la page
  */
