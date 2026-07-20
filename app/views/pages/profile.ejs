@@ -11,15 +11,15 @@
       <%- include('../partials/errorsAndSuccess'); %>
     </header>
 
-    <main class="flex items-center justify-center min-h-screen">
-      <div class="w-full max-w-xl bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-8 m-6">
+    <main class="flex items-center justify-center min-h-screen px-4">
+      <div class="w-full max-w-xl bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-6 sm:p-8 m-4 sm:m-6">
         <div>
           <div class="mb-4">
-            <h2 class="text-xl font-medium text-gray-900">Hi <%= user?.username %>, this is your profile</h2>
+            <h2 class="text-lg sm:text-xl font-medium text-gray-900">Hi <%= user?.username %>, this is your profile</h2>
             <p class="text-sm text-gray-400 mt-1">You can change all of your informations here</p>
           </div>
 
-          <form id="change-profile-form" class="space-y-4">
+          <form id="change-profile-form" class="space-y-3 sm:space-y-4">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Username</label>
@@ -42,7 +42,7 @@
           </form>
         </div>
 
-        <div class="mt-16">
+        <div class="mt-10 sm:mt-16">
           <h2 class="text-xl font-medium text-gray-900 mb-4">Password settings</h2>
 
           <form id="change-password-form" class="space-y-4">
@@ -70,7 +70,7 @@
           </form>
         </div>
 
-        <div class="mt-16">
+        <div class="mt-10 sm:mt-16">
           <h2 class="text-xl font-medium text-gray-900">User preferences</h2>
 
           <form id="notifications-form" class="space-y-4 mt-2">
@@ -81,7 +81,7 @@
                       type="checkbox"
                       id="email-notifications-input"
                       name="emailNotifications"
-                      class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                      class="w-4 h-4 border border-default-medium rounded-xs accent-purple-500 focus:ring-2 focus:ring-brand-soft"
                       <% if (user?.emailNotifications) { %> checked <% } %>
                     >
                 </div>

@@ -11,18 +11,18 @@
       <%- include('../partials/errorsAndSuccess'); %>
     </header>
 
-    <main class="flex-1 p-8">
-        <div class="flex flex-col gap-3 items-center">
+    <main class="flex-1 p-4 sm:p-8">
+        <div class="flex flex-col lg:flex-row gap-3 items-center">
 			<!-- Image -->
-			<div class="bg-white rounded-md shadow-md w-full lg:max-w-[850px] lg:flex-shrink-0 overflow-hidden flex flex-col">
+			<div class="bg-white rounded-md shadow-md w-full lg:max-w-[800px] lg:flex-shrink-0 overflow-hidden flex flex-col">
 				<img
-                    class="w-full min-h-[300px] lg:min-h-[450px] max-h-[450px] object-cover flex-1"
+                    class="w-full min-h-[220px] sm:min-h-[300px] lg:min-h-[450px] max-h-[350px] sm:max-h-[450px] object-cover flex-1"
                     src="<%= post.filepath.startsWith('/uploads/') ? post.filepath : `/uploads/${post.filepath}` %>"
                     alt="Picture by <%= post.userId.username %>"
                 />
 
                 <!-- Header -->
-                <div class="flex items-center justify-between p-3 border-b">
+                <div class="flex items-center justify-between p-2 sm:p-3 border-b">
                     <span class="bg-violet-100 text-xs font-medium px-2 py-1 rounded">
                         <%= post.userId.username %>
                     </span>
@@ -42,10 +42,10 @@
             </div>
 
             <!-- Commentaires -->
-            <div class="flex flex-col justify-between gap-6 w-full lg:max-w-[850px] ">
-                <div id="comments-list" class="flex-1 p-3 max-h-80 overflow-y-auto space-y-2 bg-white/30 backdrop-blur-sm rounded-md">
+            <div class="flex flex-col justify-between gap-4 sm:gap-6 w-full lg:max-w-[800px] ">
+                <div id="comments-list" class="flex-1 p-2 sm:p-3 max-h-60 sm:max-h-80 overflow-y-auto space-y-2 bg-white/30 backdrop-blur-sm rounded-md">
                     <% if (post.comments.length === 0) { %>
-                        <p class="m-2 text-sm px-2 py-1 italic text-gray-500">No comments</p>
+                        <p id="no-comment" class="m-2 text-sm px-2 py-1 italic text-gray-500">No comments</p>
                     <% } else { %>
                         <% post.comments.forEach(comment => { %>
                             <div class="border rounded-md bg-white flex flex-col relative" id="comment-<%= comment._id %>">
@@ -71,7 +71,7 @@
                     <div class="w-full bg-white/30 backdrop-blur-sm rounded-md">
                         <div class="px-4 py-2 bg-neutral-secondary-medium rounded-t-base">
                             <label for="comment" class="sr-only">Your comment</label>
-                            <textarea id="comment-input" name="comment" rows="4" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" placeholder="Write a comment..." required ></textarea>
+                            <textarea id="comment-input" name="comment" rows="3" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" placeholder="Write a comment..." required ></textarea>
                         </div>
                         <div class="flex items-center px-3 py-2 border-default-medium">
                             <button type="submit" class="text-white bg-violet-400 box-border border border-transparent hover:bg-violet-300 font-medium rounded-lg text-sm px-3 py-2">Post comment</button>
