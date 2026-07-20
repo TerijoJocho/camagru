@@ -8,6 +8,7 @@ const galleryContainer = document.getElementById("gallery-container") as HTMLDiv
 const prevBtn = document.getElementById("prev-btn") as HTMLAnchorElement | null;
 const nextBtn = document.getElementById("next-btn") as HTMLAnchorElement | null;
 const pageInfo = document.getElementById("page-info") as HTMLSpanElement | null;
+const pageArrow = document.getElementById("pages-arrow") as HTMLDivElement | null;
 
 let currentPage: number = 1;
 let totalPages: number = 1;
@@ -45,38 +46,47 @@ async function getData(page: number): Promise<void> {
 
     const data: GalleryResponse = await response.json();
 
-    galleryContainer.innerHTML = data.pictures
-      .map(
-        (pic) => `
-        <div class="bg-white rounded-md">
-            <a href="/pages/gallery/${pic._id}" class="w-full">
-                <img class="rounded-t-base w-full max-h-[450px] object-cover" src="${pic.filepath}" alt="Picture by ${pic.author}" />
-            </a>
+	if (data.pictures.length === 0)
+	{
+		galleryContainer.innerHTML = `<p class="text-sm italic text-gray-500">No pictures yet.</p>`;
+		pageArrow?.classList.toggle("hidden", true);
+	}
+	else
+	{
+		galleryContainer.innerHTML = data.pictures
+		  .map(
+			(pic) => `
+			<div class="bg-white rounded-md">
+				<a href="/pages/gallery/${pic._id}" class="w-full">
+					<img class="rounded-t-base w-full max-h-[450px] object-cover" src="${pic.filepath}" alt="Picture by ${pic.author}" />
+				</a>
 
-            <div class="p-2 flex justify-between items-center">
-                <span class="bg-violet-100 text-xs font-medium px-1.5 py-0.5 rounded-sm w-fit">
-                    ${pic.author}
-                </span>
+				<div class="p-2 flex justify-between items-center">
+					<span class="bg-violet-100 text-xs font-medium px-1.5 py-0.5 rounded-sm w-fit">
+						${pic.author}
+					</span>
 
-                <div class="flex gap-3">
-                  <span data-id="${pic._id}">
-                    <p class="text-sm text-gray-500 inline-block">
-                      ${pic.likesCount}
-                    </p>
-                    <i class="fa-solid fa-heart text-red-500"></i>
-                  </span>
-                  <span data-id="${pic._id}">
-                    <p class="text-sm text-gray-500 inline-block">
-                      ${pic.comments.length}
-                    </p>
-                    <i class="fa-solid fa-comment text-gray-300"></i>
-                  </span>
-                </div>
-            </div>
-        </div>
-      `,
-      )
-      .join("");
+					<div class="flex gap-3">
+					  <span data-id="${pic._id}">
+						<p class="text-sm text-gray-500 inline-block">
+						  ${pic.likesCount}
+						</p>
+						<i class="fa-solid fa-heart text-red-500"></i>
+					  </span>
+					  <span data-id="${pic._id}">
+						<p class="text-sm text-gray-500 inline-block">
+						  ${pic.comments.length}
+						</p>
+						<i class="fa-solid fa-comment text-gray-300"></i>
+					  </span>
+					</div>
+				</div>
+			</div>
+		  `,
+		  )
+		  .join("");
+		pageArrow?.classList.toggle("hidden", false);
+	}
 
     if (prevBtn) prevBtn.style.opacity = page <= 1 ? "0.3" : "1";
 
