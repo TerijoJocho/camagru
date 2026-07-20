@@ -20,7 +20,6 @@
           </div>
 
           <form id="change-profile-form" class="space-y-3 sm:space-y-4">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Username</label>
               <input type="text" name="username" placeholder="<%= user?.username %>"
@@ -46,7 +45,6 @@
           <h2 class="text-xl font-medium text-gray-900 mb-4">Password settings</h2>
 
           <form id="change-password-form" class="space-y-4">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Current password</label>
               <input type="password" name="currentPassword" placeholder="************" required
@@ -74,7 +72,6 @@
           <h2 class="text-xl font-medium text-gray-900">User preferences</h2>
 
           <form id="notifications-form" class="space-y-4 mt-2">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div class="flex">
                 <div class="flex items-center h-5">
                     <input
