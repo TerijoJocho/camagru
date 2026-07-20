@@ -212,6 +212,7 @@ async function getStickers(): Promise<void> {
   try {
     const response = await fetch("/create/stickers", {
       method: "GET",
+	  credentials: "include",
       headers: {
         "X-CSRF-Token":
           document
@@ -432,6 +433,7 @@ async function capture(): Promise<void> {
 	try {
 	  const result = await fetch("/create/capture", {
 		method: "POST",
+		credentials: "include",
 		headers: {
 			"Content-type": "application/json",
 			"X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
@@ -483,6 +485,7 @@ deleteForm?.addEventListener("submit", async (event: SubmitEvent) => {
   try {
     const result = await fetch("/create/delete", {
       method: "DELETE",
+	  credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -516,6 +519,7 @@ async function renderPictures(): Promise<void> {
   try {
     const result = await fetch("/create/user-pictures", {
       method: "GET",
+	  credentials: "include",
       headers: {
         "X-CSRF-Token":
           document

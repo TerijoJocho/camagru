@@ -155,6 +155,7 @@ export const login = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+	  path: "/",
     });
 
     return response.status(200).json({
@@ -173,22 +174,32 @@ export const login = async (req: Request, res: Response) => {
  * Déconnecte l'utilisateur
  */
 export const logout = async (req: Request, res: Response) => {
-  try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    });
+	try {
+		res.clearCookie("token", {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			path: "/",
+		});
 
-    return res.status(200).json({
-      success: "logout_successful",
-      redirect: "/pages/login",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error: "internal_server_error",
-      redirect: "/pages/gallery",
-    });
-  }
+		if (!res.locals.user)
+		{
+			return res.status(200).json({
+				success: "logout_successful",
+				redirect: "/pages/login",
+			});
+		}
+
+		return res.status(200).json({
+			success: "logout_successful",
+			redirect: "/pages/gallery",
+		});
+	} catch (error) {
+	  return res.status(500).json({
+		error: "internal_server_error",
+		redirect: "/pages/gallery",
+	  });
+	}
 };
 
 /*

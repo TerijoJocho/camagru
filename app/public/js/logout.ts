@@ -12,19 +12,20 @@ if (logoutForm) {
     try {
       const res = await fetch("/auth/logout", {
         method: "POST",
+		credentials: "include",
         headers: {
-          "Accept": "application/json", 
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",       
+          "Accept": "application/json",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "",
         },
       });
-  
+
       const data = await res.json();
-  
+
       if (!res.ok) {
         showHeaderMessage(getErrorMessage(data.error), "error");
         return;
       }
-  
+
       showHeaderMessage(getSuccessMessage(data.success), "success");
       window.setTimeout(() => {
         window.location.href = data.redirect;

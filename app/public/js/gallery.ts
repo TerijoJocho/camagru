@@ -35,6 +35,7 @@ async function getData(page: number): Promise<void> {
   try {
     const response = await fetch(url, {
       method: "GET",
+	  credentials: "include",
       headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "" },
     });
 

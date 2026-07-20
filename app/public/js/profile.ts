@@ -14,7 +14,7 @@ const emailNotificationsInput = document.getElementById("email-notifications-inp
 const emailNotificationsForm = document.getElementById("notifications-form") as HTMLFormElement;
 
 async function submitChangeProfileForm(): Promise<void> {
-    if (!changeProfileForm || !changeProfileSubmitBtn) 
+    if (!changeProfileForm || !changeProfileSubmitBtn)
         return;
 
     const formData = new FormData(changeProfileForm);
@@ -25,6 +25,7 @@ async function submitChangeProfileForm(): Promise<void> {
     try {
         const res = await fetch("/auth/change-profile", {
           method: "POST",
+		  credentials: "include",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -32,14 +33,14 @@ async function submitChangeProfileForm(): Promise<void> {
           },
           body: JSON.stringify(body),
         });
-        
+
         const data = await res.json();
-        
+
         if (!res.ok) {
           showHeaderMessage(getErrorMessage(data.error), "error");
           return;
         }
-        
+
         showHeaderMessage(getSuccessMessage(data.success), "success");
 
         if (typeof data.redirect === "string" && data.redirect.length > 0) {
@@ -55,7 +56,7 @@ async function submitChangeProfileForm(): Promise<void> {
 };
 
 async function submitChangePasswordForm(): Promise<void> {
-    if (!changePasswordForm || !changePasswordSubmitBtn) 
+    if (!changePasswordForm || !changePasswordSubmitBtn)
         return;
 
     const formData = new FormData(changePasswordForm);
@@ -66,6 +67,7 @@ async function submitChangePasswordForm(): Promise<void> {
     try {
         const res = await fetch("/auth/change-profile-password", {
           method: "POST",
+		  credentials: "include",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -73,14 +75,14 @@ async function submitChangePasswordForm(): Promise<void> {
           },
           body: JSON.stringify(body),
         });
-        
+
         const data = await res.json();
-        
+
         if (!res.ok) {
           showHeaderMessage(getErrorMessage(data.error), "error");
           return;
         }
-        
+
         showHeaderMessage(getSuccessMessage(data.success), "success");
 
         if (typeof data.redirect === "string" && data.redirect.length > 0) {
@@ -96,7 +98,7 @@ async function submitChangePasswordForm(): Promise<void> {
 };
 
 async function submitEmailNotificationsForm(): Promise<void> {
-    if (!emailNotificationsForm) 
+    if (!emailNotificationsForm)
         return;
 
     const formData = new FormData(emailNotificationsForm);
@@ -105,6 +107,7 @@ async function submitEmailNotificationsForm(): Promise<void> {
     try {
         const res = await fetch("/auth/change-user-preference", {
           method: "POST",
+		  credentials: "include",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -112,14 +115,14 @@ async function submitEmailNotificationsForm(): Promise<void> {
           },
           body: JSON.stringify(body),
         });
-        
+
         const data = await res.json();
-        
+
         if (!res.ok) {
           showHeaderMessage(getErrorMessage(data.error), "error");
           return;
         }
-        
+
         showHeaderMessage(getSuccessMessage(data.success), "success");
 
         if (typeof data.redirect === "string" && data.redirect.length > 0) {

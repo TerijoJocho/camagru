@@ -41,6 +41,7 @@ function wireDeleteCommentButton(btn: HTMLButtonElement): void {
         `/gallery/pictures/${pictureId}/comment/${commentId}`,
         {
           method: "DELETE",
+		  credentials: "include",
           headers: {
             Accept: "application/json",
             "X-CSRF-Token":
@@ -78,6 +79,7 @@ likeForm?.addEventListener("submit", async (event) => {
   try {
     const response = await fetch(likeForm.action, {
       method: "POST",
+	  credentials: "include",
       headers: {
         Accept: "application/json",
         "X-CSRF-Token":
@@ -123,6 +125,7 @@ commentForm?.addEventListener("submit", async (event) => {
   try {
     const response = await fetch(commentForm.action, {
       method: "POST",
+	  credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
