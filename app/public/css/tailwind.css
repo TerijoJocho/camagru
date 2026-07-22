@@ -810,22 +810,6 @@ body {
   max-height: 450px;
 }
 
-.max-h-4 {
-  max-height: 1rem;
-}
-
-.max-h-40 {
-  max-height: 10rem;
-}
-
-.max-h-64 {
-  max-height: 16rem;
-}
-
-.max-h-80 {
-  max-height: 20rem;
-}
-
 .min-h-0 {
   min-height: 0px;
 }
@@ -836,10 +820,6 @@ body {
 
 .min-h-screen {
   min-height: 100vh;
-}
-
-.min-h-full {
-  min-height: 100%;
 }
 
 .w-10 {
@@ -1046,11 +1026,6 @@ body {
 
 .border-white\/10 {
   border-color: rgb(255 255 255 / 0.1);
-}
-
-.border-pink-500 {
-  --tw-border-opacity: 1;
-  border-color: rgb(236 72 153 / var(--tw-border-opacity, 1));
 }
 
 .bg-black {

@@ -26,9 +26,9 @@ RUN --mount=type=cache,target=/root/.npm \
 # Runner stage: minimal runtime image with compiled app and production deps.
 FROM node:24-alpine AS runner
 
-ENV PATH=/app/node_modules/.bin:$PATH
+ENV PATH=/srv/app/node_modules/.bin:$PATH
 
-WORKDIR /app
+WORKDIR /srv/app
 
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/dist ./dist
@@ -45,4 +45,4 @@ RUN mkdir -p uploads
 EXPOSE 3000
 
 # Run the application.
-CMD ["node", "dist/server.js"]
+CMD ["node", "/srv/app/dist/server.js"]
