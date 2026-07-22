@@ -27,7 +27,7 @@ const deleteBtns = document.querySelectorAll<HTMLButtonElement>(
   ".delete-comment-btn",
 );
 
-const noComment = document.getElementById("no-comment") as HTMLParagraphElement;
+const noComment = document.getElementById("no-comment") as HTMLParagraphElement | null;
 
 function wireDeleteCommentButton(btn: HTMLButtonElement): void {
   btn.addEventListener("click", async () => {
@@ -145,7 +145,7 @@ commentForm?.addEventListener("submit", async (event) => {
     }
 
     if (commentsList && data.comment) {
-		noComment.classList.toggle("hidden", true);
+    noComment?.classList.toggle("hidden", true);
 
       const comment = document.createElement("div");
       comment.id = `comment-${data.comment._id}`;

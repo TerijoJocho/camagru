@@ -21,7 +21,8 @@ services:
     depends_on:
       - mongo
     command: node /srv/app/dist/server.js
-    volumes: []
+    volumes:
+      - ./app/uploads:/srv/app/uploads
     ports: []
     networks: [camagru]
 
