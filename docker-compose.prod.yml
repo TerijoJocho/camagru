@@ -1,0 +1,53 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "4433:4433"
+    depends_on:
+      - app
+    networks: [camagru]
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    container_name: app
+    env_file:
+      - ./.env
+    depends_on:
+      - mongo
+    command: node dist/server.js
+    volumes: []
+    ports: []
+    networks: [camagru]
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - 8081:3000
+    depends_on:
+      - mongo
+    networks: [camagru]
+
+  mongo:
+    image: mongo
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - db-data:/data/db
+      - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks: [camagru]
+
+networks:
+  camagru:
+    driver: bridge
+
+volumes:
+  db-data:

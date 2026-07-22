@@ -8,7 +8,7 @@ uploads:
 	mkdir -p $(UPLOADS_DIR)
 
 up: uploads
-	docker compose up --build
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
 
 down:
 	docker compose down
