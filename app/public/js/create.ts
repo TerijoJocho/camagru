@@ -39,6 +39,18 @@ let sticker = {
 let baseImage: HTMLVideoElement | HTMLImageElement | null = video;
 let mode: "webcam" | "upload" = "webcam";
 
+/**
+ * Calcule l'échelle MAXIMALE que peut prendre le sticker actuel, pour une
+ * rotation donnée, sans jamais dépasser les bords du canvas.
+ *
+ * Un rectangle pivoté occupe une bounding box plus grande que ses
+ * dimensions d'origine (sauf à 0°/180°) : sin/cos donnent la largeur/hauteur
+ * réelles occupées après rotation, à scale=1. On calcule ensuite le facteur
+ * d'échelle max qui garde cette bounding box dans CANVAS_WIDTH/HEIGHT.
+ *
+ * Rappelée à chaque changement de rotation (voir setupControls), pour que
+ * le slider "Size" ne permette jamais de sortir visuellement du cadre.
+ */
 function computeMaxStickerScale(rotationRadians: number = sticker.rotation): number {
   if (!stickerImage || !stickerImage.complete || !stickerImage.width || !stickerImage.height) {
     return 2;
@@ -260,6 +272,17 @@ async function getStickers(): Promise<void> {
   }
 }
 
+/**
+ * Dessine `image` dans `canvas` en conservant son ratio d'aspect d'origine
+ * (équivalent manuel du CSS `object-fit: contain`) — l'image est mise à
+ * l'échelle pour tenir entièrement dans le canvas, quitte à laisser des
+ * bandes vides, jamais recadrée/déformée.
+ *
+ * `targetCtx` est paramétrable (au lieu d'utiliser toujours `ctx`) pour
+ * pouvoir réutiliser cette même fonction sur le canvas visible (aperçu
+ * temps réel) ET sur un canvas invisible créé juste pour la capture
+ * (voir captureBackgroundDataURL) — évite la duplication de cette logique.
+ */
 function drawContain(image: HTMLImageElement | HTMLVideoElement, targetCtx: CanvasRenderingContext2D = ctx): void {
   const imageWidth = image instanceof HTMLVideoElement ? image.videoWidth : image.width;
   const imageHeight = image instanceof HTMLVideoElement ? image.videoHeight : image.height;
@@ -331,13 +354,17 @@ function startRendering(): void {
   animationId = requestAnimationFrame(render);
 }
 
-function stopRendering(): void {
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId);
-    animationId = null;
-  }
-}
 
+/**
+ * Hit-test : détermine si un point (mouseX, mouseY) tombe dans le
+ * rectangle occupé par le sticker (centré sur sticker.x/y, taille = image * scale).
+ * Utilisé au mousedown pour savoir si l'utilisateur commence
+ * bien un drag sur le sticker (et pas un clic dans le vide).
+ *
+ * Ne tient pas compte de la rotation actuelle du sticker (hit-box toujours
+ * axée sur les axes X/Y) — approximation volontaire, suffisante en pratique
+ * pour un drag au doigt/souris.
+ */
 function isMouseOnSticker(mouseX: number, mouseY: number): boolean {
   if (!stickerImage) return false;
 
@@ -404,7 +431,20 @@ function setupControls(): void {
   syncScaleInputBounds();
 }
 
-function captureBackgroundDataURL(): string {
+/**
+ * Capture le fond SEUL (webcam ou upload), sans jamais dessiner le sticker
+ * dessus, sur un canvas créé en mémoire (jamais inséré dans le DOM).
+ *
+ * Volontairement séparé du canvas visible `ctx` (qui affiche fond + sticker
+ * pour l'aperçu utilisateur) : la composition finale doit être refaite par
+ * le serveur, donc on ne doit jamais lui envoyer une image où le sticker
+ * est déjà "gravé" dedans — seul le fond doit transiter, le sticker est
+ * envoyé séparément (juste son nom + sa transform).
+ *
+ * Retourne null si aucune source valide n'est disponible (webcam refusée,
+ * pas d'image uploadée) plutôt que d'envoyer un fond vide/noir au serveur.
+ */
+function captureBackgroundDataURL(): string | null {
   const bgCanvas = document.createElement("canvas");
   bgCanvas.width = CANVAS_WIDTH;
   bgCanvas.height = CANVAS_HEIGHT;
@@ -428,6 +468,8 @@ async function capture(): Promise<void> {
 	captureBtn.disabled = true;
 
 	const backgroundDataUrl = captureBackgroundDataURL();
+	if (!backgroundDataUrl) return;
+
 	const rotateDegrees = (sticker.rotation * 180) / Math.PI;
 
 	try {
