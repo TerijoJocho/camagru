@@ -27,7 +27,7 @@ services:
     networks: [camagru]
 
   mongo-express:
-    image: mongo-express
+    image: docker.io/library/mongo-express:latest
     restart: always
     env_file:
       - ./.env
@@ -38,7 +38,7 @@ services:
     networks: [camagru]
 
   mongo:
-    image: mongo
+    image: docker.io/library/mongo:latest
     restart: always
     env_file:
       - ./.env
