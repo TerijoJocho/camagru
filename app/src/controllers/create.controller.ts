@@ -35,6 +35,25 @@ export const getStickers = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Compose l'image finale côté serveur (fond + sticker), jamais côté client.
+ *
+ * Le client envoie uniquement le fond (webcam/upload) + le NOM du sticker
+ * + sa transform (x, y, scale, rotation) — jamais l'image du sticker elle-même,
+ * ni une image déjà composée. On ne fait confiance à rien de tout ça sans
+ * validation :
+ * - `sticker` est nettoyé (path.basename) puis vérifié contre une whitelist
+ *   (fs.readdir des fichiers réellement présents dans public/stickers), pour
+ *   empêcher un path traversal (ex: "../../etc/passwd").
+ * - x/y/scale/rotation sont re-vérifiés/bornés serveur, indépendamment de ce
+ *   que le client a envoyé (un slider HTML ne protège de rien côté serveur).
+ * - `image` est inspecté via ses vrais octets (fileTypeFromBuffer), pas via
+ *   son Content-Type déclaré, qui est falsifiable.
+ *
+ * (x, y) reçus correspondent au CENTRE du sticker souhaité par l'utilisateur,
+ * mais sharp().composite() attend le coin haut-gauche (left, top) — d'où le
+ * recalcul left = x - largeur/2, top = y - hauteur/2.
+ */
 export const createCapture = async (req: Request, res: Response) => {
   try {
     const userId = res.locals.user._id;

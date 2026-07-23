@@ -52,8 +52,16 @@ export const getPictures = async (req: Request, res: Response) => {
   }
 };
 
-/*
- * like ou unlike un post lorsqu'un user est authentifié
+/**
+ * Toggle un like : ajoute ou retire l'utilisateur courant du tableau
+ * `likes` de la photo, selon s'il y est déjà.
+ *
+ * Fait volontairement un $pull/$push PUIS un findById séparé pour relire
+ * l'état à jour, plutôt que de déduire likesCount/isLiked localement à
+ * partir de `found` : garantit que la réponse reflète l'état réel en base
+ * après l'update (évite une désynchro si jamais une écriture concurrente
+ * avait lieu entre les deux appels — findByIdAndUpdate seul ne renvoie que
+ * l'état avant modification par défaut ici).
  */
 export const toggleLike = async (req: Request, res: Response) => {
   try {
@@ -121,6 +129,9 @@ export const commentPicture = async (req: Request, res: Response) => {
     const author = await User.findById(picture?.userId);
     const authorEmail = author?.email;
 
+	// Notifie l'auteur de la photo par email, sauf si :
+	// - il a désactivé les notifications (emailNotifications: false),
+	// - ou s'il commente sa propre photo (pas de sens à se notifier soi-même).
     if (author?.emailNotifications && authorEmail) {
       const sender = res.locals.user?.username;
       if (sender !== author.username)
