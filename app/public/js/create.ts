@@ -17,6 +17,7 @@ const cancelDelete = document.getElementById("cancel-delete") as HTMLButtonEleme
 const confirmDelete = document.getElementById("confirm-delete") as HTMLButtonElement;
 const scaleInput = document.getElementById("scale") as HTMLInputElement;
 const rotationInput = document.getElementById("rotation") as HTMLInputElement;
+
 const ctx = canvas.getContext("2d")!;
 const CANVAS_WIDTH = 1280;
 const CANVAS_HEIGHT = 720;
@@ -25,71 +26,18 @@ let isDragging = false;
 let animationId: number | null = null;
 let webcamStream: MediaStream | null = null;
 let webcamEnabled = false;
-
 let stickerImage: HTMLImageElement | null = null;
 let selectedStickerFilename: string | null = null;
-
 let sticker = {
   x: 300,
   y: 200,
   scale: 1,
   rotation: 0,
 };
-
 let baseImage: HTMLVideoElement | HTMLImageElement | null = video;
 let mode: "webcam" | "upload" = "webcam";
 
-/**
- * Calcule l'échelle MAXIMALE que peut prendre le sticker actuel, pour une
- * rotation donnée, sans jamais dépasser les bords du canvas.
- *
- * Un rectangle pivoté occupe une bounding box plus grande que ses
- * dimensions d'origine (sauf à 0°/180°) : sin/cos donnent la largeur/hauteur
- * réelles occupées après rotation, à scale=1. On calcule ensuite le facteur
- * d'échelle max qui garde cette bounding box dans CANVAS_WIDTH/HEIGHT.
- *
- * Rappelée à chaque changement de rotation (voir setupControls), pour que
- * le slider "Size" ne permette jamais de sortir visuellement du cadre.
- */
-function computeMaxStickerScale(rotationRadians: number = sticker.rotation): number {
-  if (!stickerImage || !stickerImage.complete || !stickerImage.width || !stickerImage.height) {
-    return 2;
-  }
-
-  const sin = Math.abs(Math.sin(rotationRadians));
-  const cos = Math.abs(Math.cos(rotationRadians));
-  const rotatedWidthAtScaleOne = stickerImage.width * cos + stickerImage.height * sin;
-  const rotatedHeightAtScaleOne = stickerImage.width * sin + stickerImage.height * cos;
-
-  if (!rotatedWidthAtScaleOne || !rotatedHeightAtScaleOne) {
-    return 0.1;
-  }
-
-  return Math.max(
-    0.1,
-    Math.min(2, CANVAS_WIDTH / rotatedWidthAtScaleOne, CANVAS_HEIGHT / rotatedHeightAtScaleOne),
-  );
-}
-
-function syncScaleInputBounds(): void {
-  if (!scaleInput) return;
-
-  const maxScale = Math.max(0.1, computeMaxStickerScale());
-  const minScale = maxScale < 0.2 ? 0.1 : 0.2;
-
-  scaleInput.min = minScale.toFixed(1);
-  scaleInput.max = maxScale.toFixed(2);
-
-  const currentScale = Number(scaleInput.value);
-  const boundedScale = Math.min(Math.max(currentScale, minScale), maxScale);
-
-  if (boundedScale !== currentScale) {
-    scaleInput.value = boundedScale.toFixed(2);
-  }
-
-  sticker.scale = boundedScale;
-}
-
+// initialisation / UI
 function updateCaptureButtonState(): void {
   const hasSource = mode === "upload" || webcamEnabled;
   const isEnabled = Boolean(stickerImage && hasSource);
@@ -161,31 +109,6 @@ async function startWebcamStream(): Promise<void> {
     startRendering();
   }
 }
-
-uploadInput.addEventListener("change", () => {
-  const files = uploadInput.files;
-  const file = files ? files[0] : null;
-  if (!file) return;
-
-  const img = new Image();
-  img.src = URL.createObjectURL(file);
-
-  img.onload = () => {
-    mode = "upload";
-    baseImage = img;
-
-    stopWebcamStream();
-
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
-
-    sticker.x = canvas.width / 2;
-    sticker.y = canvas.height / 2;
-
-    updateCaptureButtonState();
-    startRendering();
-  };
-});
 
 async function getVideo(): Promise<void> {
   if (!video) return;
@@ -272,6 +195,156 @@ async function getStickers(): Promise<void> {
   }
 }
 
+function setupControls(): void {
+  if (!scaleInput || !rotationInput) return;
+
+  scaleInput.addEventListener("input", () => {
+    sticker.scale = Math.min(Number(scaleInput.value), computeMaxStickerScale());
+  });
+
+  rotationInput.addEventListener("input", () => {
+    sticker.rotation = (Number(rotationInput.value) * Math.PI) / 180;
+    syncScaleInputBounds();
+  });
+
+  syncScaleInputBounds();
+}
+
+function enableDragging(): void {
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  canvas.addEventListener("mousedown", (event: MouseEvent) => {
+    const rect = canvas.getBoundingClientRect();
+
+    const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+
+    if (isMouseOnSticker(x, y)) {
+      isDragging = true;
+      dragOffsetX = x - sticker.x;
+      dragOffsetY = y - sticker.y;
+    }
+  });
+
+  canvas.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    isDragging = false;
+  });
+
+  canvas.addEventListener("mousemove", (event: MouseEvent) => {
+    if (!isDragging) return;
+
+    const rect = canvas.getBoundingClientRect();
+
+    sticker.x =
+      (event.clientX - rect.left) * (canvas.width / rect.width) - dragOffsetX;
+    sticker.y =
+      (event.clientY - rect.top) * (canvas.height / rect.height) - dragOffsetY;
+  });
+}
+
+async function renderPictures(): Promise<void> {
+  try {
+    const result = await fetch("/create/user-pictures", {
+      method: "GET",
+	  credentials: "include",
+      headers: {
+        "X-CSRF-Token":
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") ?? "",
+      },
+    });
+    const data = await result.json();
+    if (!result.ok) {
+      showHeaderMessage(getErrorMessage(data.error), "error");
+      return;
+    }
+    const pictures = data.pictures;
+
+    userPicturesContainer.innerHTML = "";
+
+    pictures.forEach((pic: any) => {
+      const card = document.createElement("div");
+      card.id = `picture-card-${pic._id}`;
+      card.className = "relative";
+
+      const img = document.createElement("img");
+      img.src = `/uploads/${pic.filepath}`;
+      img.className = "w-full aspect-square object-cover rounded-md";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.className =
+        "absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded";
+      deleteBtn.addEventListener("click", () => {
+        openDeleteModal(pic._id);
+      });
+
+      card.appendChild(img);
+      card.appendChild(deleteBtn);
+      userPicturesContainer.appendChild(card);
+    });
+  } catch (error) {}
+}
+
+// canvas /sticker
+/**
+ * Calcule l'échelle MAXIMALE que peut prendre le sticker actuel, pour une
+ * rotation donnée, sans jamais dépasser les bords du canvas.
+ *
+ * Un rectangle pivoté occupe une bounding box plus grande que ses
+ * dimensions d'origine (sauf à 0°/180°) : sin/cos donnent la largeur/hauteur
+ * réelles occupées après rotation, à scale=1. On calcule ensuite le facteur
+ * d'échelle max qui garde cette bounding box dans CANVAS_WIDTH/HEIGHT.
+ *
+ * Rappelée à chaque changement de rotation (voir setupControls), pour que
+ * le slider "Size" ne permette jamais de sortir visuellement du cadre.
+ */
+function computeMaxStickerScale(rotationRadians: number = sticker.rotation): number {
+  if (!stickerImage || !stickerImage.complete || !stickerImage.width || !stickerImage.height) {
+    return 2;
+  }
+
+  const sin = Math.abs(Math.sin(rotationRadians));
+  const cos = Math.abs(Math.cos(rotationRadians));
+  const rotatedWidthAtScaleOne = stickerImage.width * cos + stickerImage.height * sin;
+  const rotatedHeightAtScaleOne = stickerImage.width * sin + stickerImage.height * cos;
+
+  if (!rotatedWidthAtScaleOne || !rotatedHeightAtScaleOne) {
+    return 0.1;
+  }
+
+  return Math.max(
+    0.1,
+    Math.min(2, CANVAS_WIDTH / rotatedWidthAtScaleOne, CANVAS_HEIGHT / rotatedHeightAtScaleOne),
+  );
+}
+
+function syncScaleInputBounds(): void {
+  if (!scaleInput) return;
+
+  const maxScale = Math.max(0.1, computeMaxStickerScale());
+  const minScale = maxScale < 0.2 ? 0.1 : 0.2;
+
+  scaleInput.min = minScale.toFixed(1);
+  scaleInput.max = maxScale.toFixed(2);
+
+  const currentScale = Number(scaleInput.value);
+  const boundedScale = Math.min(Math.max(currentScale, minScale), maxScale);
+
+  if (boundedScale !== currentScale) {
+    scaleInput.value = boundedScale.toFixed(2);
+  }
+
+  sticker.scale = boundedScale;
+}
+
 /**
  * Dessine `image` dans `canvas` en conservant son ratio d'aspect d'origine
  * (équivalent manuel du CSS `object-fit: contain`) — l'image est mise à
@@ -354,7 +427,6 @@ function startRendering(): void {
   animationId = requestAnimationFrame(render);
 }
 
-
 /**
  * Hit-test : détermine si un point (mouseX, mouseY) tombe dans le
  * rectangle occupé par le sticker (centré sur sticker.x/y, taille = image * scale).
@@ -377,58 +449,6 @@ function isMouseOnSticker(mouseX: number, mouseY: number): boolean {
   const bottom = sticker.y + h / 2;
 
   return mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom;
-}
-
-function enableDragging(): void {
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
-
-  canvas.addEventListener("mousedown", (event: MouseEvent) => {
-    const rect = canvas.getBoundingClientRect();
-
-    const x = (event.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (event.clientY - rect.top) * (canvas.height / rect.height);
-
-    if (isMouseOnSticker(x, y)) {
-      isDragging = true;
-      dragOffsetX = x - sticker.x;
-      dragOffsetY = y - sticker.y;
-    }
-  });
-
-  canvas.addEventListener("mouseup", () => {
-    isDragging = false;
-  });
-
-  canvas.addEventListener("mouseleave", () => {
-    isDragging = false;
-  });
-
-  canvas.addEventListener("mousemove", (event: MouseEvent) => {
-    if (!isDragging) return;
-
-    const rect = canvas.getBoundingClientRect();
-
-    sticker.x =
-      (event.clientX - rect.left) * (canvas.width / rect.width) - dragOffsetX;
-    sticker.y =
-      (event.clientY - rect.top) * (canvas.height / rect.height) - dragOffsetY;
-  });
-}
-
-function setupControls(): void {
-  if (!scaleInput || !rotationInput) return;
-
-  scaleInput.addEventListener("input", () => {
-    sticker.scale = Math.min(Number(scaleInput.value), computeMaxStickerScale());
-  });
-
-  rotationInput.addEventListener("input", () => {
-    sticker.rotation = (Number(rotationInput.value) * Math.PI) / 180;
-    syncScaleInputBounds();
-  });
-
-  syncScaleInputBounds();
 }
 
 /**
@@ -505,11 +525,38 @@ async function capture(): Promise<void> {
 	}
 }
 
+// delete modale
 function openDeleteModal(pictureId: string): void {
   deleteInput.value = pictureId;
   deleteModal.classList.remove("hidden");
   deleteModal.classList.add("flex");
 }
+
+// events
+uploadInput.addEventListener("change", () => {
+  const files = uploadInput.files;
+  const file = files ? files[0] : null;
+  if (!file) return;
+
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+
+  img.onload = () => {
+    mode = "upload";
+    baseImage = img;
+
+    stopWebcamStream();
+
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
+    sticker.x = canvas.width / 2;
+    sticker.y = canvas.height / 2;
+
+    updateCaptureButtonState();
+    startRendering();
+  };
+});
 
 cancelDelete.addEventListener("click", () => {
   deleteModal.classList.remove("flex");
@@ -557,52 +604,7 @@ deleteForm?.addEventListener("submit", async (event: SubmitEvent) => {
   }
 });
 
-async function renderPictures(): Promise<void> {
-  try {
-    const result = await fetch("/create/user-pictures", {
-      method: "GET",
-	  credentials: "include",
-      headers: {
-        "X-CSRF-Token":
-          document
-            .querySelector('meta[name="csrf-token"]')
-            ?.getAttribute("content") ?? "",
-      },
-    });
-    const data = await result.json();
-    if (!result.ok) {
-      showHeaderMessage(getErrorMessage(data.error), "error");
-      return;
-    }
-    const pictures = data.pictures;
-
-    userPicturesContainer.innerHTML = "";
-
-    pictures.forEach((pic: any) => {
-      const card = document.createElement("div");
-      card.id = `picture-card-${pic._id}`;
-      card.className = "relative";
-
-      const img = document.createElement("img");
-      img.src = `/uploads/${pic.filepath}`;
-      img.className = "w-full aspect-square object-cover rounded-md";
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.textContent = "Delete";
-      deleteBtn.className =
-        "absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded";
-      deleteBtn.addEventListener("click", () => {
-        openDeleteModal(pic._id);
-      });
-
-      card.appendChild(img);
-      card.appendChild(deleteBtn);
-      userPicturesContainer.appendChild(card);
-    });
-  } catch (error) {}
-}
-
+//bootsratp
 getVideo();
 getStickers();
 enableDragging();
