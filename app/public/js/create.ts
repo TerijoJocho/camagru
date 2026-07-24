@@ -214,7 +214,8 @@ function enableDragging(): void {
   let dragOffsetX = 0;
   let dragOffsetY = 0;
 
-  canvas.addEventListener("mousedown", (event: MouseEvent) => {
+  canvas.addEventListener("pointerdown", (event: PointerEvent) => {
+	canvas.setPointerCapture(event.pointerId);
     const rect = canvas.getBoundingClientRect();
 
     const x = (event.clientX - rect.left) * (canvas.width / rect.width);
@@ -227,15 +228,22 @@ function enableDragging(): void {
     }
   });
 
-  canvas.addEventListener("mouseup", () => {
+  canvas.addEventListener("pointerup", (event: PointerEvent) => {
+	canvas.releasePointerCapture(event.pointerId);
     isDragging = false;
   });
 
-  canvas.addEventListener("mouseleave", () => {
+  canvas.addEventListener("pointerleave", (event: PointerEvent) => {
+	canvas.releasePointerCapture(event.pointerId);
     isDragging = false;
   });
 
-  canvas.addEventListener("mousemove", (event: MouseEvent) => {
+  canvas.addEventListener("pointerout", (event: PointerEvent) => {
+	canvas.releasePointerCapture(event.pointerId);
+    isDragging = false;
+  });
+
+  canvas.addEventListener("pointermove", (event: MouseEvent) => {
     if (!isDragging) return;
 
     const rect = canvas.getBoundingClientRect();

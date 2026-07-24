@@ -4,7 +4,7 @@
     <%- include('../partials/head'); %>
     <script type="module" src="/js/signup.js" defer></script>
   </head>
-  
+
   <body class="">
     <header>
       <%- include('../partials/header'); %> <%-
@@ -79,6 +79,10 @@
               class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
+
+		  	<div class="mt-2">
+              <p class="text-xs text-gray-400"><em>Your password must have: a letter, a digit, a special character from @$!%*?&; and must be between 8 and 30 characters.</em></p>
+        	</div>
 
           <button
             id="signup-btn"
