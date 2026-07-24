@@ -3,8 +3,8 @@ import Joi from 'joi';
 export const registerSchema = Joi.object({
     username: Joi.string().trim().alphanum().min(3).max(10).required(),
     email: Joi.string().trim().email({ minDomainSegments: 2, tlds: false }).required(),
-    password: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
-    confirmPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
+    password: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
+    confirmPassword: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
 });
 
 export const loginSchema = Joi.object({
@@ -12,7 +12,7 @@ export const loginSchema = Joi.object({
 		Joi.string().trim().email({minDomainSegments: 2, tlds: false}),
 		Joi.string().trim().alphanum().min(3).max(10),
 	).required(),
-    password: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
+    password: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
 });
 
 export const emailSchema = Joi.object({
@@ -22,15 +22,15 @@ export const emailSchema = Joi.object({
 
 export const resetPasswordSchema = Joi.object({
 	_csrf: Joi.string().trim(),
-    password: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
-    confirmPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
+    password: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
+    confirmPassword: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
 });
 
 export const changePasswordSchema = Joi.object({
 	_csrf: Joi.string().trim(),
-    currentPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
-    newPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
-    confirmNewPassword: Joi.string().trim().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
+    currentPassword: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
+    newPassword: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
+    confirmNewPassword: Joi.string().trim().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/).required(),
 });
 
 export const updateProfileSchema = Joi.object({
